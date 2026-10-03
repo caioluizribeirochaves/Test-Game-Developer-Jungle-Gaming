@@ -18,10 +18,15 @@ export function getPlayerProfile(): PlayerProfile {
     id: 'player_jack_001',
     name: 'Captain Jack',
   };
-  try {
-    localStorage.setItem(STORAGE_KEY_PLAYER_PROFILE, JSON.stringify(profile));
-  } catch {}
   return profile;
+}
+
+export function savePlayerProfile(profile: Partial<PlayerProfile>): void {
+  const current = getPlayerProfile();
+  const updated = { ...current, ...profile };
+  try {
+    localStorage.setItem(STORAGE_KEY_PLAYER_PROFILE, JSON.stringify(updated));
+  } catch {}
 }
 
 export function saveLastMatchResult(record: MatchRecord): void {

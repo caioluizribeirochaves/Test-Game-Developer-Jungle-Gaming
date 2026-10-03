@@ -16,6 +16,11 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
   onClose,
 }) => {
   const [activeTab, setActiveTab] = React.useState<'ranking' | 'history'>(initialTab);
+
+  // Dynamic filter state for ranking inspection
+  const [selectedDuration, setSelectedDuration] = React.useState(config.sessionDuration);
+  const [selectedSpawnInterval, setSelectedSpawnInterval] = React.useState(config.enemySpawnInterval);
+
   const [rankingPage, setRankingPage] = React.useState(1);
   const [historyPage, setHistoryPage] = React.useState(1);
 
@@ -24,7 +29,7 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
     isLoading: isRankingLoading,
     isError: isRankingError,
     refetch: refetchRanking,
-  } = useRankingQuery(config.sessionDuration, config.enemySpawnInterval, rankingPage);
+  } = useRankingQuery(selectedDuration, selectedSpawnInterval, rankingPage);
 
   const {
     data: historyData,
@@ -55,7 +60,7 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
 
   return (
     <div
-      className="relative w-full h-full flex flex-col items-center justify-center bg-cover bg-center overflow-hidden"
+      className="relative w-full h-full flex flex-col items-center justify-center bg-cover bg-center overflow-x-hidden overflow-y-auto p-4 sm:p-6"
       style={{ backgroundImage: 'url(/assets/ui_scene_background.png)' }}
     >
       <PiratePanel size="wide">
@@ -81,10 +86,52 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
           </PirateButton>
         </div>
 
-        {/* Dynamic Subtitle */}
-        <div className="text-[11px] sm:text-xs font-bold text-[#c5ad83] uppercase tracking-wider mb-4 text-center">
+        {/* Filters Row (matching Image 3) */}
+        {activeTab === 'ranking' && (
+          <div className="flex items-center justify-center gap-4 mb-2 text-xs text-stone-300">
+            <div className="flex items-center gap-1.5">
+              <span>Battle length:</span>
+              <select
+                value={selectedDuration}
+                onChange={(e) => {
+                  setSelectedDuration(Number(e.target.value));
+                  setRankingPage(1);
+                }}
+                className="bg-[#0e1925] border border-[#3b5774] text-amber-300 font-bold px-2 py-0.5 rounded cursor-pointer outline-none font-mono"
+              >
+                <option value={60}>60 s</option>
+                <option value={90}>90 s</option>
+                <option value={120}>120 s</option>
+                <option value={150}>150 s</option>
+                <option value={180}>180 s</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span>Spawn interval:</span>
+              <select
+                value={selectedSpawnInterval}
+                onChange={(e) => {
+                  setSelectedSpawnInterval(Number(e.target.value));
+                  setRankingPage(1);
+                }}
+                className="bg-[#0e1925] border border-[#3b5774] text-amber-300 font-bold px-2 py-0.5 rounded cursor-pointer outline-none font-mono"
+              >
+                <option value={1}>1 s</option>
+                <option value={2}>2 s</option>
+                <option value={3}>3 s</option>
+                <option value={4}>4 s</option>
+                <option value={5}>5 s</option>
+                <option value={6}>6 s</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* Dynamic Subtitle (matching Image 3) */}
+        <div className="text-[11px] sm:text-xs font-bold text-[#c5ad83] uppercase tracking-wider mb-3 text-center">
           {activeTab === 'ranking'
-            ? `${config.sessionDuration} SECOND BATTLES • ${config.enemySpawnInterval} SECOND SPAWN INTERVAL`
+            ? `${selectedDuration} SECOND BATTLES • ${selectedSpawnInterval} SECOND SPAWN INTERVAL`
             : `CAPTAIN JACK • YOUR RECENT BATTLES`}
         </div>
 
@@ -94,13 +141,13 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
             /* RANKING TAB CONTENT */
             <div>
               {isRankingLoading && (
-                <div className="w-full h-48 flex items-center justify-center text-amber-300 font-bold animate-pulse text-sm">
+                <div className="w-full h-44 flex items-center justify-center text-amber-300 font-bold animate-pulse text-sm">
                   Loading Fleet Rankings...
                 </div>
               )}
 
               {isRankingError && (
-                <div className="w-full h-48 flex flex-col items-center justify-center text-red-400 text-sm gap-2">
+                <div className="w-full h-44 flex flex-col items-center justify-center text-red-400 text-sm gap-2">
                   <span>Failed to load ranking records.</span>
                   <button
                     onClick={() => refetchRanking()}
@@ -112,7 +159,7 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
               )}
 
               {!isRankingLoading && !isRankingError && rankingData?.items.length === 0 && (
-                <div className="w-full h-48 flex items-center justify-center text-stone-400 text-sm">
+                <div className="w-full h-44 flex items-center justify-center text-stone-400 text-sm">
                   No voyages recorded for this configuration yet.
                 </div>
               )}
@@ -165,13 +212,13 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
             /* MATCH HISTORY TAB CONTENT */
             <div>
               {isHistoryLoading && (
-                <div className="w-full h-48 flex items-center justify-center text-amber-300 font-bold animate-pulse text-sm">
+                <div className="w-full h-44 flex items-center justify-center text-amber-300 font-bold animate-pulse text-sm">
                   Fetching Captain's Logbook...
                 </div>
               )}
 
               {isHistoryError && (
-                <div className="w-full h-48 flex flex-col items-center justify-center text-red-400 text-sm gap-2">
+                <div className="w-full h-44 flex flex-col items-center justify-center text-red-400 text-sm gap-2">
                   <span>Failed to load match history.</span>
                   <button
                     onClick={() => refetchHistory()}
@@ -183,7 +230,7 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
               )}
 
               {!isHistoryLoading && !isHistoryError && historyData?.items.length === 0 && (
-                <div className="w-full h-48 flex items-center justify-center text-stone-400 text-sm">
+                <div className="w-full h-44 flex items-center justify-center text-stone-400 text-sm">
                   You haven't fought any battles yet. Set sail to record your feats!
                 </div>
               )}
@@ -228,9 +275,9 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
             </div>
           )}
 
-          {/* Pagination Controls */}
+          {/* Pagination Controls (matching Image 3) */}
           {activeTab === 'ranking' && rankingData && rankingData.totalPages > 1 && (
-            <div className="w-full flex items-center justify-center gap-3 pt-3">
+            <div className="w-full flex items-center justify-center gap-3 pt-2">
               <PirateButton
                 variant="round"
                 size="sm"
@@ -258,7 +305,7 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
           )}
 
           {activeTab === 'history' && historyData && historyData.totalPages > 1 && (
-            <div className="w-full flex items-center justify-center gap-3 pt-3">
+            <div className="w-full flex items-center justify-center gap-3 pt-2">
               <PirateButton
                 variant="round"
                 size="sm"

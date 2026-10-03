@@ -19,15 +19,17 @@ test.describe('1. Navigation, Validation, and Persistence of Options', () => {
     const increaseDurationBtn = page.getByRole('button', { name: 'Increase session duration' });
     await increaseDurationBtn.click();
 
-    // Modify Enemy Spawn Time (Increase: 3 -> 4s)
+    // Modify Enemy Spawn Time (Increase: 3 -> 3.5 -> 4s)
     const increaseSpawnBtn = page.getByRole('button', { name: 'Increase spawn interval' });
+    await increaseSpawnBtn.click();
     await increaseSpawnBtn.click();
 
     // Verify updated values displayed
     await expect(page.getByText('130 s')).toBeVisible();
     await expect(page.getByText('4 s')).toBeVisible();
 
-    // Click Main Menu to save
+    // Click SAVE and then Main Menu
+    await page.getByRole('button', { name: 'SAVE' }).click();
     await page.getByRole('button', { name: 'MAIN MENU' }).click();
     await expect(page.getByRole('button', { name: 'PLAY' })).toBeVisible();
 
@@ -46,7 +48,7 @@ test.describe('1. Navigation, Validation, and Persistence of Options', () => {
         await increaseDurationBtn.click();
       }
     }
-    await expect(page.getByText('180 s')).toBeVisible();
+    await expect(page.getByText('180 s', { exact: true })).toBeVisible();
     await expect(increaseDurationBtn).toBeDisabled();
 
     // Return to main menu

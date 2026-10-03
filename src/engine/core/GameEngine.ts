@@ -3,6 +3,7 @@ import { MatchConfig, GameplayBalanceConfig, DEFAULT_BALANCE_CONFIG } from '../c
 import { AssetLoader } from './AssetLoader';
 import { MapGenerator } from './MapGenerator';
 import { ParticleManager } from '../vfx/ParticleManager';
+import { DamageTextManager } from '../vfx/DamageTextManager';
 import { AudioManager } from '../audio/AudioManager';
 import { InputManager } from './InputManager';
 import { PlayerShip, PlayerInputState } from '../entities/PlayerShip';
@@ -26,6 +27,7 @@ export class GameEngine {
 
   private map: MapGenerator;
   private particleMgr: ParticleManager | null = null;
+  private damageTextMgr: DamageTextManager | null = null;
   public readonly input: InputManager;
   private audio: AudioManager;
 
@@ -90,8 +92,9 @@ export class GameEngine {
     // 3. Render Map
     this.map.renderMap(this.gameWorld);
 
-    // 4. Initialize VFX and Input
+    // 4. Initialize VFX, Damage Numbers, and Input
     this.particleMgr = new ParticleManager(this.gameWorld);
+    this.damageTextMgr = new DamageTextManager(this.gameWorld);
     this.input.attach();
 
     // 5. Attach browser listeners for auto-pause and resizing
@@ -264,6 +267,7 @@ export class GameEngine {
           this.audio.playExplosion();
           this.audio.playSfx('ship_collision');
 
+          this.damageTextMgr?.spawnDamage(this.player.x, this.player.y, this.balance.chaserCollisionDamage, true);
           const fatal = this.player.takeDamage(this.balance.chaserCollisionDamage);
           this.events.onHealthChange(this.player.health, this.player.maxHealth);
 
@@ -319,6 +323,7 @@ export class GameEngine {
             this.particleMgr?.spawnWoodSplinters(proj.x, proj.y);
             this.audio.playHitWood();
 
+            this.damageTextMgr?.spawnDamage(enemy.x, enemy.y, proj.damage, false);
             const killed = enemy.takeDamage(proj.damage);
             if (killed) {
               // Killed by player attacks: award 1 point
@@ -349,6 +354,7 @@ export class GameEngine {
           this.particleMgr?.spawnWoodSplinters(proj.x, proj.y);
           this.audio.playHitWood();
 
+          this.damageTextMgr?.spawnDamage(this.player.x, this.player.y, proj.damage, true);
           const fatal = this.player.takeDamage(proj.damage);
           this.events.onHealthChange(this.player.health, this.player.maxHealth);
 
@@ -364,8 +370,9 @@ export class GameEngine {
       }
     }
 
-    // 6. Update VFX
+    // 6. Update VFX and Damage Numbers
     this.particleMgr?.update(dt);
+    this.damageTextMgr?.update(dt);
   }
 
   private spawnEnemy(): void {
@@ -436,6 +443,8 @@ export class GameEngine {
 
     this.particleMgr?.clear();
     this.particleMgr = null;
+    this.damageTextMgr?.clear();
+    this.damageTextMgr = null;
 
     if (this.app) {
       this.app.ticker.remove(this.update, this);
