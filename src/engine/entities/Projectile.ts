@@ -26,7 +26,7 @@ export class Projectile {
   private life: number;
   private sprite: Sprite;
   private trailGfx: Graphics;
-  private container: Container;
+  public container: Container;
   private trailPoints: { x: number; y: number }[] = [];
   private maxTrailPoints: number = 8;
 

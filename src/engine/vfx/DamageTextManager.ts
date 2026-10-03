@@ -18,29 +18,29 @@ export class DamageTextManager {
 
   public spawnDamage(x: number, y: number, amount: number, isPlayer: boolean = false): void {
     const textStr = `-${amount}`;
-    const color = isPlayer ? '#ff3333' : '#ffcc00'; // Player damage in bright red, enemy damage in golden yellow
+    const color = isPlayer ? '#ff2b2b' : '#ffdd00'; // Player damage in glowing red, enemy damage in radiant gold
 
     const text = new Text({
       text: textStr,
       style: {
-        fontFamily: 'Cinzel, Georgia, sans-serif',
-        fontSize: 22,
+        fontFamily: 'Cinzel, Georgia, serif',
+        fontSize: 24,
         fontWeight: '900',
         fill: color,
-        stroke: { color: '#1a0d00', width: 4 },
+        stroke: { color: '#000000', width: 5 },
         dropShadow: {
           color: '#000000',
-          blur: 4,
-          distance: 2,
+          blur: 6,
+          distance: 3,
         },
       },
     });
 
     text.anchor.set(0.5);
-    // Slight random offset so consecutive numbers don't overlap completely
-    text.x = x + (Math.random() - 0.5) * 20;
-    text.y = y - 25;
-    text.scale.set(1.2); // Initial punchy scale
+    // Position comfortably above the ship hull and health bar
+    text.x = x + (Math.random() - 0.5) * 16;
+    text.y = y - 48;
+    text.scale.set(1.3); // Initial punchy impact scale
 
     this.container.addChild(text);
 

@@ -91,6 +91,47 @@ export class ParticleManager {
     }
   }
 
+  public spawnShipWake(x: number, y: number, angle: number, speed: number): void {
+    if (speed < 12) return;
+
+    // Position wake at the stern (rear) of the ship
+    const sternDist = 22;
+    const sternX = x - Math.cos(angle) * sternDist;
+    const sternY = y - Math.sin(angle) * sternDist;
+
+    // Two wake puffs (port and starboard trails)
+    const lateralOffsets = [-8, 8];
+    for (const lat of lateralOffsets) {
+      const offsetX = -Math.sin(angle) * lat;
+      const offsetY = Math.cos(angle) * lat;
+      const spawnX = sternX + offsetX;
+      const spawnY = sternY + offsetY;
+
+      const gfx = new Graphics();
+      gfx.ellipse(0, 0, 4.5, 2.2);
+      gfx.fill({ color: 0xffffff, alpha: 0.55 });
+      gfx.rotation = angle + Math.PI / 2;
+      gfx.x = spawnX;
+      gfx.y = spawnY;
+
+      this.container.addChild(gfx);
+
+      // Slow drift outward
+      const driftSpeed = 10 + Math.random() * 8;
+      const driftAngle = angle + (lat > 0 ? 1.4 : -1.4);
+
+      this.particles.push({
+        sprite: gfx,
+        vx: Math.cos(driftAngle) * driftSpeed,
+        vy: Math.sin(driftAngle) * driftSpeed,
+        life: 0.7,
+        maxLife: 0.7,
+        rotationSpeed: 0,
+        scaleDelta: 2.4, // Expands gently as it dissolves
+      });
+    }
+  }
+
   public spawnWoodSplinters(x: number, y: number): void {
     const assets = AssetLoader.getInstance();
     for (let i = 0; i < 5; i++) {

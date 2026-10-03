@@ -78,7 +78,7 @@ export const DEFAULT_BALANCE_CONFIG: GameplayBalanceConfig = {
   chaserRatio: 0.55, // 55% chaser, 45% shooter
 
   chaserMaxHealth: 50,
-  chaserMoveSpeed: 170,
+  chaserMoveSpeed: 155,
   chaserTurnSpeed: 2.2,
   chaserCollisionDamage: 30,
 

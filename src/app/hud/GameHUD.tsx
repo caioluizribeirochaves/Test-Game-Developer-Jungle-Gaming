@@ -10,6 +10,96 @@ export interface GameHUDProps {
   onVirtualInput: (action: keyof PlayerInputState, value: boolean) => void;
 }
 
+interface RoundControlButtonProps {
+  icon: string;
+  alt: string;
+  keyLabel?: string;
+  size?: 'sm' | 'md' | 'lg';
+  onPointerDown?: () => void;
+  onPointerUp?: () => void;
+  onPointerLeave?: () => void;
+  onClick?: () => void;
+  className?: string;
+  ariaLabel: string;
+}
+
+const RoundControlButton: React.FC<RoundControlButtonProps> = ({
+  icon,
+  alt,
+  keyLabel,
+  size = 'md',
+  onPointerDown,
+  onPointerUp,
+  onPointerLeave,
+  onClick,
+  className = '',
+  ariaLabel,
+}) => {
+  const [isPressed, setIsPressed] = React.useState(false);
+  const [isHovered, setIsHovered] = React.useState(false);
+
+  const frameSrc = isPressed
+    ? '/assets/png/retina/ui/controls/button_round_pressed.png'
+    : isHovered
+    ? '/assets/png/retina/ui/controls/button_round_hover.png'
+    : '/assets/png/retina/ui/controls/button_round_normal.png';
+
+  const sizeStyles = {
+    sm: 'w-10 h-10 sm:w-11 sm:h-11',
+    md: 'w-14 h-14 sm:w-16 sm:h-16',
+    lg: 'w-16 h-16 sm:w-18 sm:h-18',
+  }[size];
+
+  const iconSizes = {
+    sm: 'w-5 h-5 sm:w-6 sm:h-6',
+    md: 'w-8 h-8 sm:w-9 sm:h-9',
+    lg: 'w-9 h-9 sm:w-10 sm:h-10',
+  }[size];
+
+  return (
+    <div className={`flex flex-col items-center select-none ${className}`}>
+      <button
+        onPointerDown={() => {
+          setIsPressed(true);
+          onPointerDown?.();
+        }}
+        onPointerUp={() => {
+          setIsPressed(false);
+          onPointerUp?.();
+        }}
+        onPointerLeave={() => {
+          setIsPressed(false);
+          setIsHovered(false);
+          onPointerLeave?.();
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onClick={onClick}
+        className={`relative ${sizeStyles} flex items-center justify-center cursor-pointer transition-transform active:scale-95 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]`}
+        aria-label={ariaLabel}
+      >
+        <img
+          src={frameSrc}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+        />
+        <img
+          src={icon}
+          alt={alt}
+          className={`relative z-10 ${iconSizes} object-contain transition-transform ${
+            isPressed ? 'translate-y-0.5 scale-95' : ''
+          }`}
+        />
+      </button>
+      {keyLabel && (
+        <span className="text-[10px] sm:text-xs font-mono font-bold text-stone-200 bg-black/75 px-2 py-0.5 rounded border border-amber-900/60 shadow-md mt-1 pointer-events-none">
+          {keyLabel}
+        </span>
+      )}
+    </div>
+  );
+};
+
 export const GameHUD: React.FC<GameHUDProps> = ({
   health,
   maxHealth,
@@ -28,12 +118,12 @@ export const GameHUD: React.FC<GameHUDProps> = ({
     <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-3 sm:p-5 overflow-hidden select-none">
       {/* Top Header Bar */}
       <div className="w-full flex items-start justify-between">
-        {/* Top-Left: Wooden Health Bar Frame with Heart (matching Image 4) */}
+        {/* Top-Left: Wooden Health Bar Frame with Heart */}
         <div className="flex items-center gap-1 pointer-events-auto">
           {/* Heart Icon */}
           <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-b from-[#e6b756] to-[#80550f] border-2 border-[#4a2e07] shadow-lg flex items-center justify-center -mr-2.5 z-10">
             <img
-              src="/assets/png/default/ui/hud/icon_heart.png"
+              src="/assets/png/retina/ui/hud/icon_heart.png"
               alt="Heart"
               className="w-5 h-5 sm:w-6 sm:h-6 object-contain drop-shadow"
             />
@@ -61,12 +151,12 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           </div>
         </div>
 
-        {/* Top-Right: Score, Time & Pause Buttons (matching Image 4) */}
+        {/* Top-Right: Score, Time & Pause Button */}
         <div className="flex items-center gap-2 sm:gap-3 pointer-events-auto">
           {/* Score Counter Badge */}
           <div className="flex items-center gap-1.5 bg-gradient-to-b from-[#5c3710] to-[#381f06] border-2 border-[#9b6f1e] rounded-xl px-3 sm:px-4 py-1.5 shadow-lg text-[#f7edd2]">
             <img
-              src="/assets/png/default/ui/hud/icon_score.png"
+              src="/assets/png/retina/ui/hud/icon_score.png"
               alt="Score"
               className="w-4 h-4 sm:w-5 sm:h-5 object-contain"
             />
@@ -78,7 +168,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           {/* Time Counter Badge */}
           <div className="flex items-center gap-1.5 bg-gradient-to-b from-[#5c3710] to-[#381f06] border-2 border-[#9b6f1e] rounded-xl px-3 sm:px-4 py-1.5 shadow-lg text-[#f7edd2]">
             <img
-              src="/assets/png/default/ui/hud/icon_time.png"
+              src="/assets/png/retina/ui/hud/icon_time.png"
               alt="Time"
               className="w-4 h-4 sm:w-5 sm:h-5 object-contain"
             />
@@ -91,146 +181,97 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             </span>
           </div>
 
-          {/* Pause Button */}
-          <button
+          {/* Pause Button framed with round button asset */}
+          <RoundControlButton
+            icon="/assets/png/retina/ui/controls/icon_pause.png"
+            alt="Pause"
+            size="sm"
             onClick={onTogglePause}
-            className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-gradient-to-b from-[#e6b756] via-[#dfa837] to-[#80550f] border-2 border-[#472909] shadow-lg flex items-center justify-center text-[#3a2007] text-base sm:text-xl font-black hover:brightness-110 active:scale-95 cursor-pointer"
-            aria-label="Pause Game"
-          >
-            ❚❚
-          </button>
+            ariaLabel="Pause Game"
+          />
         </div>
       </div>
 
-      {/* Bottom Virtual Touch Controls with Key Hint Badges (matching Image 4) */}
+      {/* Bottom Virtual Touch Controls with Key Hint Badges */}
       <div className="w-full flex items-end justify-between pb-2">
         {/* Left Side: Steering and Movement Controls */}
         <div className="flex items-end gap-2 sm:gap-3 pointer-events-auto">
           {/* Turn Left */}
-          <div className="flex flex-col items-center">
-            <button
-              onPointerDown={() => onVirtualInput('turnLeft', true)}
-              onPointerUp={() => onVirtualInput('turnLeft', false)}
-              onPointerLeave={() => onVirtualInput('turnLeft', false)}
-              className="w-13 h-13 sm:w-16 sm:h-16 rounded-full bg-gradient-to-b from-[#e6b756] to-[#80550f] border-2 border-[#472909] shadow-xl flex items-center justify-center active:scale-90"
-              aria-label="Turn Left"
-            >
-              <img
-                src="/assets/png/default/ui/controls/icon_turn_left.png"
-                alt="Turn Left"
-                className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
-              />
-            </button>
-            <span className="text-[10px] sm:text-xs font-mono font-bold text-stone-300 bg-black/60 px-1.5 py-0.2 rounded border border-stone-600 mt-1">
-              A
-            </span>
-          </div>
+          <RoundControlButton
+            icon="/assets/png/retina/ui/controls/icon_turn_left.png"
+            alt="Turn Left"
+            keyLabel="A"
+            size="md"
+            onPointerDown={() => onVirtualInput('turnLeft', true)}
+            onPointerUp={() => onVirtualInput('turnLeft', false)}
+            onPointerLeave={() => onVirtualInput('turnLeft', false)}
+            ariaLabel="Turn Left"
+          />
 
           {/* Move Forward */}
-          <div className="flex flex-col items-center -mb-2">
-            <button
-              onPointerDown={() => onVirtualInput('forward', true)}
-              onPointerUp={() => onVirtualInput('forward', false)}
-              onPointerLeave={() => onVirtualInput('forward', false)}
-              className="w-15 h-15 sm:w-18 sm:h-18 rounded-full bg-gradient-to-b from-[#fce79f] via-[#dfa837] to-[#80550f] border-3 border-[#472909] shadow-2xl flex items-center justify-center active:scale-90"
-              aria-label="Move Forward"
-            >
-              <img
-                src="/assets/png/default/ui/controls/icon_forward.png"
-                alt="Move Forward"
-                className="w-8 h-8 sm:w-9 sm:h-9 object-contain"
-              />
-            </button>
-            <span className="text-[10px] sm:text-xs font-mono font-bold text-stone-300 bg-black/60 px-1.5 py-0.2 rounded border border-stone-600 mt-1">
-              W
-            </span>
-          </div>
+          <RoundControlButton
+            icon="/assets/png/retina/ui/controls/icon_forward.png"
+            alt="Move Forward"
+            keyLabel="W"
+            size="lg"
+            className="-mb-2"
+            onPointerDown={() => onVirtualInput('forward', true)}
+            onPointerUp={() => onVirtualInput('forward', false)}
+            onPointerLeave={() => onVirtualInput('forward', false)}
+            ariaLabel="Move Forward"
+          />
 
           {/* Turn Right */}
-          <div className="flex flex-col items-center">
-            <button
-              onPointerDown={() => onVirtualInput('turnRight', true)}
-              onPointerUp={() => onVirtualInput('turnRight', false)}
-              onPointerLeave={() => onVirtualInput('turnRight', false)}
-              className="w-13 h-13 sm:w-16 sm:h-16 rounded-full bg-gradient-to-b from-[#e6b756] to-[#80550f] border-2 border-[#472909] shadow-xl flex items-center justify-center active:scale-90"
-              aria-label="Turn Right"
-            >
-              <img
-                src="/assets/png/default/ui/controls/icon_turn_right.png"
-                alt="Turn Right"
-                className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
-              />
-            </button>
-            <span className="text-[10px] sm:text-xs font-mono font-bold text-stone-300 bg-black/60 px-1.5 py-0.2 rounded border border-stone-600 mt-1">
-              D
-            </span>
-          </div>
+          <RoundControlButton
+            icon="/assets/png/retina/ui/controls/icon_turn_right.png"
+            alt="Turn Right"
+            keyLabel="D"
+            size="md"
+            onPointerDown={() => onVirtualInput('turnRight', true)}
+            onPointerUp={() => onVirtualInput('turnRight', false)}
+            onPointerLeave={() => onVirtualInput('turnRight', false)}
+            ariaLabel="Turn Right"
+          />
         </div>
 
         {/* Right Side: Attack Cannons with Key Hint Badges */}
         <div className="flex items-end gap-2 sm:gap-3 pointer-events-auto">
           {/* Port Broadside (Left) */}
-          <div className="flex flex-col items-center">
-            <button
-              onPointerDown={() => onVirtualInput('fireLeft', true)}
-              onPointerUp={() => onVirtualInput('fireLeft', false)}
-              onPointerLeave={() => onVirtualInput('fireLeft', false)}
-              className="w-13 h-13 sm:w-16 sm:h-16 rounded-full bg-gradient-to-b from-[#e6b756] to-[#80550f] border-2 border-[#472909] shadow-xl flex items-center justify-center active:scale-90"
-              aria-label="Fire Port Broadside"
-              title="Port Broadside"
-            >
-              <img
-                src="/assets/png/default/ui/controls/icon_fire_left.png"
-                alt="Port Broadside"
-                className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
-              />
-            </button>
-            <span className="text-[10px] sm:text-xs font-mono font-bold text-stone-300 bg-black/60 px-1.5 py-0.2 rounded border border-stone-600 mt-1">
-              Q
-            </span>
-          </div>
+          <RoundControlButton
+            icon="/assets/png/retina/ui/controls/icon_fire_left.png"
+            alt="Port Broadside"
+            keyLabel="Q"
+            size="md"
+            onPointerDown={() => onVirtualInput('fireLeft', true)}
+            onPointerUp={() => onVirtualInput('fireLeft', false)}
+            onPointerLeave={() => onVirtualInput('fireLeft', false)}
+            ariaLabel="Fire Port Broadside"
+          />
 
           {/* Bow Cannon (Front) */}
-          <div className="flex flex-col items-center -mb-2">
-            <button
-              onPointerDown={() => onVirtualInput('fireFront', true)}
-              onPointerUp={() => onVirtualInput('fireFront', false)}
-              onPointerLeave={() => onVirtualInput('fireFront', false)}
-              className="w-15 h-15 sm:w-18 sm:h-18 rounded-full bg-gradient-to-b from-[#fce79f] via-[#dfa837] to-[#80550f] border-3 border-[#472909] shadow-2xl flex items-center justify-center active:scale-90"
-              aria-label="Fire Frontal Cannon"
-              title="Bow Cannon"
-            >
-              <img
-                src="/assets/png/default/ui/controls/icon_fire_front.png"
-                alt="Bow Cannon"
-                className="w-8 h-8 sm:w-9 sm:h-9 object-contain"
-              />
-            </button>
-            <span className="text-[10px] sm:text-xs font-mono font-bold text-stone-300 bg-black/60 px-1.5 py-0.2 rounded border border-stone-600 mt-1">
-              Space
-            </span>
-          </div>
+          <RoundControlButton
+            icon="/assets/png/retina/ui/controls/icon_fire_front.png"
+            alt="Bow Cannon"
+            keyLabel="Space"
+            size="lg"
+            className="-mb-2"
+            onPointerDown={() => onVirtualInput('fireFront', true)}
+            onPointerUp={() => onVirtualInput('fireFront', false)}
+            onPointerLeave={() => onVirtualInput('fireFront', false)}
+            ariaLabel="Fire Frontal Cannon"
+          />
 
           {/* Starboard Broadside (Right) */}
-          <div className="flex flex-col items-center">
-            <button
-              onPointerDown={() => onVirtualInput('fireRight', true)}
-              onPointerUp={() => onVirtualInput('fireRight', false)}
-              onPointerLeave={() => onVirtualInput('fireRight', false)}
-              className="w-13 h-13 sm:w-16 sm:h-16 rounded-full bg-gradient-to-b from-[#e6b756] to-[#80550f] border-2 border-[#472909] shadow-xl flex items-center justify-center active:scale-90"
-              aria-label="Fire Starboard Broadside"
-              title="Starboard Broadside"
-            >
-              <img
-                src="/assets/png/default/ui/controls/icon_fire_right.png"
-                alt="Starboard Broadside"
-                className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
-              />
-            </button>
-            <span className="text-[10px] sm:text-xs font-mono font-bold text-stone-300 bg-black/60 px-1.5 py-0.2 rounded border border-stone-600 mt-1">
-              E
-            </span>
-          </div>
+          <RoundControlButton
+            icon="/assets/png/retina/ui/controls/icon_fire_right.png"
+            alt="Starboard Broadside"
+            keyLabel="E"
+            size="md"
+            onPointerDown={() => onVirtualInput('fireRight', true)}
+            onPointerUp={() => onVirtualInput('fireRight', false)}
+            onPointerLeave={() => onVirtualInput('fireRight', false)}
+            ariaLabel="Fire Starboard Broadside"
+          />
         </div>
       </div>
     </div>

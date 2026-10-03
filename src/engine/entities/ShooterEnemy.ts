@@ -2,6 +2,7 @@ import { Container, Sprite, Graphics } from 'pixi.js';
 import { AssetLoader } from '../core/AssetLoader';
 import { GameplayBalanceConfig } from '../config/gameConfig';
 import { Projectile } from './Projectile';
+import { ObstacleAvoidance } from '../core/ObstacleAvoidance';
 
 export class ShooterEnemy {
   public x: number;
@@ -47,13 +48,21 @@ export class ShooterEnemy {
     this.updateHealthBar();
   }
 
+  private stuckTimer: number = 0;
+  private evadeTimer: number = 0;
+  private evadeDir: number = 1;
+
   public update(
     dt: number,
     targetX: number,
     targetY: number,
     mapBlockedCheck: (x: number, y: number, r: number) => boolean,
     onSpawnProjectile: (proj: Projectile) => void,
-    onPlayCannonSound: () => void
+    onPlayCannonSound: () => void,
+    obstacles: any[] = [],
+    arenaWidth: number = 1920,
+    arenaHeight: number = 1080,
+    otherEnemies?: { x: number; y: number; radius: number }[]
   ): void {
     if (this.isDestroyed) return;
 
@@ -66,30 +75,89 @@ export class ShooterEnemy {
     const distance = Math.hypot(dx, dy);
     const targetAngle = Math.atan2(dy, dx);
 
-    // Smooth rotation towards player
-    let angleDiff = targetAngle - this.angle;
+    // Obstacle avoidance navigation
+    let desiredAngle: number;
+    let speedMult = 1.0;
+
+    if (this.evadeTimer > 0) {
+      this.evadeTimer -= dt;
+      desiredAngle = this.angle + this.evadeDir * 1.5;
+    } else {
+      // Determine virtual target: if too close to player, back up / flank
+      let navTargetX = targetX;
+      let navTargetY = targetY;
+      if (distance < this.config.shooterDesiredDistance * 0.8) {
+        // Flank or back off
+        navTargetX = this.x - Math.cos(targetAngle) * 200;
+        navTargetY = this.y - Math.sin(targetAngle) * 200;
+      }
+
+      const steering = ObstacleAvoidance.computeSteering(
+        this.x,
+        this.y,
+        this.angle,
+        navTargetX,
+        navTargetY,
+        this.radius,
+        obstacles,
+        arenaWidth,
+        arenaHeight,
+        mapBlockedCheck,
+        otherEnemies
+      );
+      desiredAngle = steering.desiredAngle;
+      speedMult = steering.speedMultiplier;
+    }
+
+    // Smooth turn towards desired angle
+    let angleDiff = desiredAngle - this.angle;
     while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
     while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
     const maxTurn = this.config.shooterTurnSpeed * dt;
     this.angle += Math.max(-maxTurn, Math.min(maxTurn, angleDiff));
 
-    // Distance management: approach if too far, keep distance if in range
+    // Distance management
     let moveDir = 0;
     if (distance > this.config.shooterDesiredDistance) {
       moveDir = 1;
     } else if (distance < this.config.shooterDesiredDistance * 0.7) {
-      moveDir = -0.6; // Back off slightly
+      moveDir = -0.5; // Back off
+    } else {
+      // Gentle cruise / broadside positioning
+      moveDir = 0.4;
     }
 
-    if (moveDir !== 0) {
-      const nextX = this.x + Math.cos(this.angle) * this.speed * moveDir * dt;
-      const nextY = this.y + Math.sin(this.angle) * this.speed * moveDir * dt;
+    const prevX = this.x;
+    const prevY = this.y;
+    const moveSpeed = this.speed * speedMult * Math.abs(moveDir);
+    const sign = Math.sign(moveDir);
 
-      if (!mapBlockedCheck(nextX, nextY, this.radius)) {
+    const nextX = this.x + Math.cos(this.angle) * moveSpeed * sign * dt;
+    const nextY = this.y + Math.sin(this.angle) * moveSpeed * sign * dt;
+
+    if (!mapBlockedCheck(nextX, nextY, this.radius)) {
+      this.x = nextX;
+      this.y = nextY;
+    } else {
+      if (!mapBlockedCheck(nextX, this.y, this.radius)) {
         this.x = nextX;
+      } else if (!mapBlockedCheck(this.x, nextY, this.radius)) {
         this.y = nextY;
       }
+    }
+
+    // Stuck detection
+    const movedDist = Math.hypot(this.x - prevX, this.y - prevY);
+    if (moveDir !== 0 && movedDist < moveSpeed * dt * 0.25) {
+      this.stuckTimer += dt;
+      if (this.stuckTimer > 0.25) {
+        this.evadeTimer = 0.5;
+        this.evadeDir = Math.random() < 0.5 ? -1 : 1;
+        this.stuckTimer = 0;
+      }
+    } else {
+      this.stuckTimer = Math.max(0, this.stuckTimer - dt);
     }
 
     this.updatePosition();

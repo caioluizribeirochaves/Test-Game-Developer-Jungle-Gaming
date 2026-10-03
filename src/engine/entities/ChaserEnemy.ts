@@ -1,6 +1,7 @@
 import { Container, Sprite, Graphics } from 'pixi.js';
 import { AssetLoader } from '../core/AssetLoader';
 import { GameplayBalanceConfig } from '../config/gameConfig';
+import { ObstacleAvoidance } from '../core/ObstacleAvoidance';
 
 export class ChaserEnemy {
   public x: number;
@@ -45,43 +46,86 @@ export class ChaserEnemy {
     this.updateHealthBar();
   }
 
+  private stuckTimer: number = 0;
+  private evadeTimer: number = 0;
+  private evadeDir: number = 1;
+
   public update(
     dt: number,
     targetX: number,
     targetY: number,
-    mapBlockedCheck: (x: number, y: number, r: number) => boolean
+    mapBlockedCheck: (x: number, y: number, r: number) => boolean,
+    obstacles: any[] = [],
+    arenaWidth: number = 1920,
+    arenaHeight: number = 1080,
+    otherEnemies?: { x: number; y: number; radius: number }[]
   ): void {
     if (this.isDestroyed) return;
 
-    // Calculate angle towards target
-    const dx = targetX - this.x;
-    const dy = targetY - this.y;
-    const targetAngle = Math.atan2(dy, dx);
+    let desiredAngle: number;
+    let speedMult = 1.0;
 
-    // Smooth turn towards target angle
-    let angleDiff = targetAngle - this.angle;
+    if (this.evadeTimer > 0) {
+      this.evadeTimer -= dt;
+      desiredAngle = this.angle + this.evadeDir * 1.6;
+    } else {
+      const steering = ObstacleAvoidance.computeSteering(
+        this.x,
+        this.y,
+        this.angle,
+        targetX,
+        targetY,
+        this.radius,
+        obstacles,
+        arenaWidth,
+        arenaHeight,
+        mapBlockedCheck,
+        otherEnemies
+      );
+      desiredAngle = steering.desiredAngle;
+      speedMult = steering.speedMultiplier;
+    }
+
+    // Smooth turn towards desired angle
+    let angleDiff = desiredAngle - this.angle;
     while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
     while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
     const maxTurn = this.config.chaserTurnSpeed * dt;
     this.angle += Math.max(-maxTurn, Math.min(maxTurn, angleDiff));
 
-    // Move forward
-    const nextX = this.x + Math.cos(this.angle) * this.speed * dt;
-    const nextY = this.y + Math.sin(this.angle) * this.speed * dt;
+    // Realistic turning deceleration
+    const turnPenalty = Math.max(0.65, 1 - Math.abs(angleDiff) * 0.35);
+    const moveSpeed = this.speed * speedMult * turnPenalty;
+
+    const prevX = this.x;
+    const prevY = this.y;
+    const nextX = this.x + Math.cos(this.angle) * moveSpeed * dt;
+    const nextY = this.y + Math.sin(this.angle) * moveSpeed * dt;
 
     if (!mapBlockedCheck(nextX, nextY, this.radius)) {
       this.x = nextX;
       this.y = nextY;
     } else {
-      // Try sliding or nudge angle
+      // Slide along tangent if possible
       if (!mapBlockedCheck(nextX, this.y, this.radius)) {
         this.x = nextX;
       } else if (!mapBlockedCheck(this.x, nextY, this.radius)) {
         this.y = nextY;
-      } else {
-        this.angle += (Math.PI / 2) * dt; // turn away from wall
       }
+    }
+
+    // Unstick system
+    const movedDist = Math.hypot(this.x - prevX, this.y - prevY);
+    if (movedDist < moveSpeed * dt * 0.25) {
+      this.stuckTimer += dt;
+      if (this.stuckTimer > 0.25) {
+        this.evadeTimer = 0.5;
+        this.evadeDir = Math.random() < 0.5 ? -1 : 1;
+        this.stuckTimer = 0;
+      }
+    } else {
+      this.stuckTimer = Math.max(0, this.stuckTimer - dt);
     }
 
     this.updatePosition();

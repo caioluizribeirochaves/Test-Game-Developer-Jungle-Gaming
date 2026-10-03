@@ -48,149 +48,84 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
   return (
     <div
-      className="relative w-full h-full flex flex-col items-center justify-center bg-cover bg-center overflow-x-hidden overflow-y-auto p-4 sm:p-6"
+      className="relative w-full h-full flex flex-col items-center justify-center bg-cover bg-center overflow-x-hidden overflow-y-auto p-4 select-none"
       style={{ backgroundImage: 'url(/assets/ui_scene_background.png)' }}
     >
       {/* Sound Mute Toggle (Top Right) */}
       <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
         <button
           onClick={toggleSound}
-          className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 text-amber-300 border border-amber-500/40 flex items-center justify-center text-lg shadow-lg cursor-pointer"
+          className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 text-amber-300 border border-amber-500/40 flex items-center justify-center text-lg shadow-lg cursor-pointer transition-transform active:scale-90"
           aria-label={isMuted ? 'Unmute Audio' : 'Mute Audio'}
         >
           {isMuted ? '🔇' : '🔊'}
         </button>
       </div>
 
-      {/* Side-by-Side Dual Panels Container (matching Image 1) */}
-      <div className="flex flex-col lg:flex-row items-center justify-center gap-6 sm:gap-8 max-w-5xl w-full my-auto z-10">
-        {/* Left Panel: Primary Pirate Battle Menu */}
-        <PiratePanel size="md" className="flex-1 max-w-[420px]">
-          {/* Banner Title */}
-          <div className="mb-2 flex flex-col items-center">
-            <div className="px-6 py-2 bg-gradient-to-b from-[#e6b756] via-[#dfa837] to-[#80550f] rounded-2xl border-2 border-[#523307] shadow-xl transform -rotate-1">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-wider text-[#331c04] drop-shadow-[0_2px_3px_rgba(255,255,255,0.4)]">
-                PIRATE BATTLE
-              </h1>
-            </div>
-            <span className="text-[10px] sm:text-xs font-bold tracking-widest text-[#d5b985] uppercase mt-2">
-              Set sail. Take command.
-            </span>
+      {/* Central Authentic Pirate Menu Panel (matching media_1791050724851.png) */}
+      <PiratePanel size="menu" className="my-auto z-10">
+        {/* Title Plaque */}
+        <div className="w-full flex flex-col items-center pt-2">
+          <div className="relative w-[270px] sm:w-[300px] h-[72px] sm:h-[78px] flex items-center justify-center filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.6)]">
+            <img
+              src="/assets/png/retina/ui/menu/button_primary_normal.png"
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+            />
+            <h1 className="relative z-10 font-serif font-black tracking-widest text-2xl sm:text-3xl text-[#3d240c] uppercase drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]">
+              PIRATE BATTLE
+            </h1>
           </div>
+          <p className="font-serif text-[10px] sm:text-[11px] font-bold tracking-[0.25em] text-[#dfa837] uppercase mt-2.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+            SET SAIL. TAKE COMMAND.
+          </p>
+        </div>
 
-          {/* Primary Action Buttons */}
-          <div className="flex flex-col gap-3 my-4 w-full items-center">
-            <PirateButton variant="primary" size="lg" onClick={onPlay}>
-              PLAY
-            </PirateButton>
+        {/* Primary Action Buttons: PLAY & OPTIONS */}
+        <div className="flex flex-col gap-3.5 my-auto w-full items-center">
+          <PirateButton variant="primary" size="lg" onClick={onPlay}>
+            PLAY
+          </PirateButton>
 
-            <PirateButton variant="primary" size="md" onClick={onOptions}>
-              OPTIONS
-            </PirateButton>
-          </div>
+          <PirateButton variant="primary" size="md" onClick={onOptions}>
+            OPTIONS
+          </PirateButton>
+        </div>
 
-          {/* Small Pirate Dinghy Illustration */}
-          <div className="my-2 flex flex-col items-center">
-            <div className="w-10 h-14 relative flex items-center justify-center">
-              <img
-                src="/assets/png/default/ships/dinghy_large_1.png"
-                alt="Pirate Ship"
-                className="w-8 h-12 object-contain filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
-              />
-            </div>
-            <p className="text-[11px] text-[#c5ad83] text-center font-medium mt-1">
-              Navigate the islands. Survive the battle.
-            </p>
-          </div>
+        {/* Dinghy Illustration & Tagline */}
+        <div className="flex flex-col items-center gap-2 my-1">
+          <img
+            src="/assets/png/retina/ships/dinghy_large_1.png"
+            alt="Pirate Boat"
+            className="w-7 h-11 sm:w-8 sm:h-12 object-contain filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.85)]"
+          />
+          <p className="font-serif text-[9.5px] sm:text-[10.5px] font-semibold tracking-wider text-[#d4bd8a] uppercase text-center drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] max-w-[280px]">
+            NAVIGATE THE ISLANDS. SURVIVE THE BATTLE.
+          </p>
+        </div>
 
-          {/* Bottom Secondary Buttons: Ranking and Match History */}
-          <div className="flex items-center gap-3 mt-4 w-full justify-center">
-            <PirateButton
-              variant="secondary"
-              size="sm"
-              onClick={() => onOpenLog('ranking')}
-            >
-              RANKING
-            </PirateButton>
+        {/* Bottom Secondary Buttons: RANKING & MATCH HISTORY */}
+        <div className="flex items-center justify-center gap-3 sm:gap-4 w-full pb-2">
+          <PirateButton
+            variant="secondary"
+            size="md"
+            onClick={() => onOpenLog('ranking')}
+          >
+            RANKING
+          </PirateButton>
 
-            <PirateButton
-              variant="secondary"
-              size="sm"
-              onClick={() => onOpenLog('history')}
-            >
-              MATCH HISTORY
-            </PirateButton>
-          </div>
-        </PiratePanel>
+          <PirateButton
+            variant="secondary"
+            size="md"
+            onClick={() => onOpenLog('history')}
+          >
+            MATCH HISTORY
+          </PirateButton>
+        </div>
+      </PiratePanel>
 
-        {/* Right Panel: Controls & Instructions Panel (matching Image 1) */}
-        <PiratePanel size="md" className="flex-1 max-w-[420px]">
-          <h2 className="text-xl sm:text-2xl font-black text-[#fce79f] tracking-wider mb-4 drop-shadow-md">
-            CONTROLS
-          </h2>
-
-          {/* Keybindings Table */}
-          <div className="w-full flex flex-col gap-2 text-xs sm:text-sm mb-4">
-            <div className="flex items-center justify-between py-1 border-b border-[#25394d]">
-              <span className="text-stone-300 font-medium">Sail forward</span>
-              <span className="px-2.5 py-0.5 rounded bg-black/60 border border-stone-600 font-mono text-amber-200 text-xs">
-                W / ↑
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between py-1 border-b border-[#25394d]">
-              <span className="text-stone-300 font-medium">Turn left</span>
-              <span className="px-2.5 py-0.5 rounded bg-black/60 border border-stone-600 font-mono text-amber-200 text-xs">
-                A / ←
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between py-1 border-b border-[#25394d]">
-              <span className="text-stone-300 font-medium">Turn right</span>
-              <span className="px-2.5 py-0.5 rounded bg-black/60 border border-stone-600 font-mono text-amber-200 text-xs">
-                D / →
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between py-1 border-b border-[#25394d]">
-              <span className="text-stone-300 font-medium">Fire bow cannon</span>
-              <span className="px-2.5 py-0.5 rounded bg-black/60 border border-stone-600 font-mono text-amber-200 text-xs">
-                Space / K
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between py-1 border-b border-[#25394d]">
-              <span className="text-stone-300 font-medium">Port broadside (left)</span>
-              <span className="px-2.5 py-0.5 rounded bg-black/60 border border-stone-600 font-mono text-amber-200 text-xs">
-                Q / J
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between py-1 border-b border-[#25394d]">
-              <span className="text-stone-300 font-medium">Starboard broadside (right)</span>
-              <span className="px-2.5 py-0.5 rounded bg-black/60 border border-stone-600 font-mono text-amber-200 text-xs">
-                E / L
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between py-1 border-b border-[#25394d]">
-              <span className="text-stone-300 font-medium">Pause</span>
-              <span className="px-2.5 py-0.5 rounded bg-black/60 border border-stone-600 font-mono text-amber-200 text-xs">
-                P / Esc
-              </span>
-            </div>
-          </div>
-
-          {/* Touch Note */}
-          <div className="w-full bg-[#122438]/80 p-3 rounded-xl border border-[#25394d]">
-            <p className="text-[11px] text-[#c5ad83] text-left leading-relaxed">
-              On touch screens, drag the joystick (bottom left) towards where you want to sail and use the cannon buttons (bottom right). Steering and firing work at the same time.
-            </p>
-          </div>
-        </PiratePanel>
-      </div>
-
-      {/* Network Lab Status (Bottom Left - matching Image 1) */}
+      {/* Network Lab Status (Bottom Left) */}
       <div className="absolute bottom-3 left-4 z-20">
         <button
           onClick={onOpenChaosSimulator}

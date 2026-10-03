@@ -24,8 +24,15 @@ export class GameEngine {
   private app: Application | null = null;
   private rootContainer: Container | null = null;
   private gameWorld: Container | null = null;
+  private terrainLayer: Container | null = null;
+  private wakeLayer: Container | null = null;
+  private shipsLayer: Container | null = null;
+  private projectilesLayer: Container | null = null;
+  private effectsLayer: Container | null = null;
+  private damageTextLayer: Container | null = null;
 
   private map: MapGenerator;
+  private wakeParticleMgr: ParticleManager | null = null;
   private particleMgr: ParticleManager | null = null;
   private damageTextMgr: DamageTextManager | null = null;
   public readonly input: InputManager;
@@ -87,14 +94,31 @@ export class GameEngine {
     this.app.stage.addChild(this.rootContainer);
 
     this.gameWorld = new Container();
+    this.gameWorld.sortableChildren = true;
     this.rootContainer.addChild(this.gameWorld);
 
+    this.terrainLayer = new Container();
+    this.wakeLayer = new Container();
+    this.shipsLayer = new Container();
+    this.projectilesLayer = new Container();
+    this.effectsLayer = new Container();
+    this.damageTextLayer = new Container();
+    this.damageTextLayer.zIndex = 9999;
+
+    this.gameWorld.addChild(this.terrainLayer);
+    this.gameWorld.addChild(this.wakeLayer);
+    this.gameWorld.addChild(this.shipsLayer);
+    this.gameWorld.addChild(this.projectilesLayer);
+    this.gameWorld.addChild(this.effectsLayer);
+    this.gameWorld.addChild(this.damageTextLayer);
+
     // 3. Render Map
-    this.map.renderMap(this.gameWorld);
+    this.map.renderMap(this.terrainLayer);
 
     // 4. Initialize VFX, Damage Numbers, and Input
-    this.particleMgr = new ParticleManager(this.gameWorld);
-    this.damageTextMgr = new DamageTextManager(this.gameWorld);
+    this.wakeParticleMgr = new ParticleManager(this.wakeLayer);
+    this.particleMgr = new ParticleManager(this.effectsLayer);
+    this.damageTextMgr = new DamageTextManager(this.damageTextLayer);
     this.input.attach();
 
     // 5. Attach browser listeners for auto-pause and resizing
@@ -113,7 +137,7 @@ export class GameEngine {
   }
 
   private startMatch(): void {
-    if (!this.gameWorld || !this.particleMgr) return;
+    if (!this.gameWorld || !this.particleMgr || !this.shipsLayer) return;
 
     this.timeRemaining = this.config.sessionDuration;
     this.elapsedTime = 0;
@@ -127,8 +151,8 @@ export class GameEngine {
     this.events.onScoreChange(this.score);
     this.events.onTimeChange(this.timeRemaining);
 
-    // Spawn player in center water
-    this.player = new PlayerShip(960, 540, this.balance, this.gameWorld);
+    // Spawn player in center water in the ships layer
+    this.player = new PlayerShip(960, 540, this.balance, this.shipsLayer);
     this.events.onHealthChange(this.player.health, this.player.maxHealth);
 
     // Initial audio cues
@@ -234,29 +258,65 @@ export class GameEngine {
       }
     }
 
+    // Update living ocean caustics & wake VFX
+    this.map.updateWater(dt, this.elapsedTime);
+    this.wakeParticleMgr?.update(dt);
+
     // 3. Update Player
     const playerInputs = this.input.getInputState();
     this.player.update(
       dt,
       playerInputs,
       (x, y, r) => this.map.isPointBlocked(x, y, r),
-      (proj) => this.projectiles.push(proj),
+      (proj) => {
+        if (this.projectilesLayer && proj.container.parent !== this.projectilesLayer) {
+          this.projectilesLayer.addChild(proj.container);
+        }
+        this.projectiles.push(proj);
+      },
       (broadside) => {
         if (broadside) this.audio.playSfx('cannon_broadside');
         else this.audio.playCannonFire();
       }
     );
 
-    // Audio for player sailing motion
+    // Audio and wake for player sailing motion
     this.audio.setSailingVolume(this.player.speed > 10 ? 0.35 : 0);
+    if (this.player.speed > 12) {
+      this.wakeParticleMgr?.spawnShipWake(
+        this.player.x,
+        this.player.y,
+        this.player.angle,
+        this.player.speed
+      );
+    }
 
-    // 4. Update Enemies
+    // 4. Update Enemies with Obstacle Avoidance & Wake
+    const enemyPositions = this.enemies.map((e) => ({ x: e.x, y: e.y, radius: e.radius }));
+
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i]!;
 
+      // Spawn wake behind moving enemy ships
+      if (enemy.speed > 12) {
+        this.wakeParticleMgr?.spawnShipWake(
+          enemy.x,
+          enemy.y,
+          enemy.angle,
+          enemy.speed
+        );
+      }
+
       if (enemy instanceof ChaserEnemy) {
-        enemy.update(dt, this.player.x, this.player.y, (x, y, r) =>
-          this.map.isPointBlocked(x, y, r)
+        enemy.update(
+          dt,
+          this.player.x,
+          this.player.y,
+          (x, y, r) => this.map.isPointBlocked(x, y, r),
+          this.map.obstacles,
+          this.map.width,
+          this.map.height,
+          enemyPositions
         );
 
         // Chaser vs Player Collision (Kamikaze)
@@ -286,8 +346,17 @@ export class GameEngine {
           this.player.x,
           this.player.y,
           (x, y, r) => this.map.isPointBlocked(x, y, r),
-          (proj) => this.projectiles.push(proj),
-          () => this.audio.playCannonFire()
+          (proj) => {
+            if (this.projectilesLayer && proj.container.parent !== this.projectilesLayer) {
+              this.projectilesLayer.addChild(proj.container);
+            }
+            this.projectiles.push(proj);
+          },
+          () => this.audio.playCannonFire(),
+          this.map.obstacles,
+          this.map.width,
+          this.map.height,
+          enemyPositions
         );
       }
     }
@@ -376,7 +445,7 @@ export class GameEngine {
   }
 
   private spawnEnemy(): void {
-    if (!this.gameWorld || !this.player) return;
+    if (!this.gameWorld || !this.player || !this.shipsLayer) return;
 
     const spawnPoint = this.map.findSafeSpawnPoint(
       this.player.x,
@@ -386,10 +455,10 @@ export class GameEngine {
 
     const isChaser = Math.random() < this.balance.chaserRatio;
     if (isChaser) {
-      const chaser = new ChaserEnemy(spawnPoint.x, spawnPoint.y, this.balance, this.gameWorld);
+      const chaser = new ChaserEnemy(spawnPoint.x, spawnPoint.y, this.balance, this.shipsLayer);
       this.enemies.push(chaser);
     } else {
-      const shooter = new ShooterEnemy(spawnPoint.x, spawnPoint.y, this.balance, this.gameWorld);
+      const shooter = new ShooterEnemy(spawnPoint.x, spawnPoint.y, this.balance, this.shipsLayer);
       this.enemies.push(shooter);
     }
   }
@@ -441,6 +510,8 @@ export class GameEngine {
     for (const p of this.projectiles) p.destroy();
     this.projectiles = [];
 
+    this.wakeParticleMgr?.clear();
+    this.wakeParticleMgr = null;
     this.particleMgr?.clear();
     this.particleMgr = null;
     this.damageTextMgr?.clear();

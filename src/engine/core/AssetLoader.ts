@@ -119,23 +119,31 @@ export class AssetLoader {
         } catch {}
       }
 
-      // 5. Preload tilesheet or sample tiles for the arena
+      // 5. Preload retina tilesheet (16 columns x 6 rows of 128x128 retina tiles = 96 tiles)
       try {
-        const tilesBaseTex = await Assets.load('/assets/tilesheet/tiles_sheet.png');
-        // Slice 64x64 tiles (16 columns x 16 rows)
-        const cols = 16;
-        const rows = 16;
-        const tileSize = 64;
-        let tileIndex = 1;
-        for (let r = 0; r < rows; r++) {
-          for (let c = 0; c < cols; c++) {
-            const frame = new Rectangle(c * tileSize, r * tileSize, tileSize, tileSize);
-            const tileTex = new Texture({
-              source: tilesBaseTex.source,
-              frame,
-            });
-            this.textures.set(`tile_${tileIndex}`, tileTex);
-            tileIndex++;
+        let tilesBaseTex: Texture | null = null;
+        let tileSize = 128;
+        try {
+          tilesBaseTex = await Assets.load('/assets/tilesheet/tiles_sheet_retina.png');
+        } catch {
+          tilesBaseTex = await Assets.load('/assets/tilesheet/tiles_sheet.png');
+          tileSize = 64;
+        }
+
+        if (tilesBaseTex) {
+          const cols = 16;
+          const rows = 6;
+          let tileIndex = 1;
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              const frame = new Rectangle(c * tileSize, r * tileSize, tileSize, tileSize);
+              const tileTex = new Texture({
+                source: tilesBaseTex.source,
+                frame,
+              });
+              this.textures.set(`tile_${tileIndex}`, tileTex);
+              tileIndex++;
+            }
           }
         }
       } catch (err) {

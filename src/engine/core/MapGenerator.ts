@@ -9,29 +9,38 @@ export interface ObstacleBox {
   isRock?: boolean;
 }
 
+interface WaterTile {
+  sprite: Sprite;
+  baseX: number;
+  baseY: number;
+  phase: number;
+}
+
 export class MapGenerator {
   public readonly width: number = 1920;
   public readonly height: number = 1080;
 
   // 4 Main Islands + 3 Isolated Sea Rocks matching the design reference
   public readonly obstacles: ObstacleBox[] = [
-    // 1. Top-Left Tropical Island
+    // 1. Top-Left Tropical Island (Lush greenery + Fort Tower + Palm trees)
     { x: 340, y: 140, width: 360, height: 260 },
-    // 2. Top-Right Sandy Island
+    // 2. Top-Right Sandy Dune Island (Rock formations + Sunken Cannon + Palm bush)
     { x: 1220, y: 140, width: 300, height: 240 },
-    // 3. Bottom-Left Round Sand Island
+    // 3. Bottom-Left Fortified Outpost Island (Stone Fort + Battlements + Cannon)
     { x: 400, y: 680, width: 240, height: 240 },
-    // 4. Bottom-Right Island with green strip
+    // 4. Bottom-Right Palm Strip Island (Green meadow + Stranded boat + Twin Palms)
     { x: 1100, y: 680, width: 380, height: 220 },
 
-    // Sea Rocks in open water channels
+    // Sea Rocks in open navigation channels
     { x: 940, y: 210, width: 50, height: 45, isRock: true },
     { x: 880, y: 840, width: 50, height: 45, isRock: true },
     { x: 1500, y: 630, width: 45, height: 40, isRock: true },
   ];
 
+  private waterTiles: WaterTile[] = [];
+
   public isPointBlocked(x: number, y: number, radius: number = 0): boolean {
-    // 1. Boundary check
+    // 1. Arena Boundary
     if (
       x - radius < 0 ||
       x + radius > this.width ||
@@ -41,7 +50,7 @@ export class MapGenerator {
       return true;
     }
 
-    // 2. Obstacles check
+    // 2. Island & Rock Obstacles
     for (const box of this.obstacles) {
       const closestX = Math.max(box.x, Math.min(x, box.x + box.width));
       const closestY = Math.max(box.y, Math.min(y, box.y + box.height));
@@ -70,125 +79,415 @@ export class MapGenerator {
       const dy = ry - playerY;
       const dist = Math.hypot(dx, dy);
 
-      // Must be safely away from player and free of island obstacles
       if (dist >= minDistance && !this.isPointBlocked(rx, ry, 60)) {
         return { x: rx, y: ry };
       }
     }
 
-    // Safe fallback spawn point in central channel
     return { x: 960, y: 480 };
   }
 
   public renderMap(container: Container): void {
     const assets = AssetLoader.getInstance();
 
-    // 1. Ocean Background (deep tropical water)
+    // 1. Deep Ocean Background
     const oceanGfx = new Graphics();
     oceanGfx.rect(0, 0, this.width, this.height);
-    oceanGfx.fill(0x3598be); // Tropical turquoise ocean
+    oceanGfx.fill(0x2d87aa); // Vibrant Caribbean tropical ocean
     container.addChild(oceanGfx);
 
-    // Subtle water caustics / wave tile overlay
+    // 2. Shimmering Water Caustics (tile_73)
+    this.waterTiles = [];
     const tileSize = 64;
+    const waterTex = assets.getTexture('tile_73');
     for (let x = 0; x < this.width; x += tileSize * 2) {
       for (let y = 0; y < this.height; y += tileSize * 2) {
-        const waterSprite = new Sprite(assets.getTexture('tile_73'));
+        const waterSprite = new Sprite(waterTex);
         waterSprite.x = x;
         waterSprite.y = y;
         waterSprite.width = tileSize * 2;
         waterSprite.height = tileSize * 2;
         waterSprite.alpha = 0.22;
         container.addChild(waterSprite);
+
+        this.waterTiles.push({
+          sprite: waterSprite,
+          baseX: x,
+          baseY: y,
+          phase: (x * 0.05 + y * 0.08) % (Math.PI * 2),
+        });
       }
     }
 
-    // 2. Render Shallow Water Halos around each island (as seen in Image 4)
+    // 3. Shallow Water Shoals around Islands (Halos)
     const haloGfx = new Graphics();
     for (const box of this.obstacles) {
-      if (box.isRock) continue;
-      const haloMargin = 45;
+      if (box.isRock) {
+        // Soft round foam ring around sea rocks
+        haloGfx.circle(box.x + box.width / 2, box.y + box.height / 2, 38);
+        haloGfx.fill({ color: 0x8be5f5, alpha: 0.35 });
+        continue;
+      }
+      const haloMargin = 42;
       haloGfx.roundRect(
         box.x - haloMargin,
         box.y - haloMargin,
         box.width + haloMargin * 2,
         box.height + haloMargin * 2,
-        48
+        50
       );
-      haloGfx.fill({ color: 0x9be8f7, alpha: 0.38 }); // Translucent shallow shoal
+      haloGfx.fill({ color: 0x8be5f5, alpha: 0.38 });
     }
     container.addChild(haloGfx);
 
-    // 3. Render Island Bodies (Sand + Lush Greenery + Decor)
-    for (const box of this.obstacles) {
-      if (box.isRock) {
-        // Sea Rock
-        const rockSprite = new Sprite(assets.getTexture('tile_67'));
-        rockSprite.anchor.set(0.5);
-        rockSprite.x = box.x + box.width / 2;
-        rockSprite.y = box.y + box.height / 2;
-        rockSprite.scale.set(1.1);
-        container.addChild(rockSprite);
-        continue;
+    // 4. Construct Each Island Using Authentic Seamless Tiles & Transparent Props
+    this.renderIsland1(container, assets, this.obstacles[0]!); // Top-Left Tropical
+    this.renderIsland2(container, assets, this.obstacles[1]!); // Top-Right Sand Dunes
+    this.renderIsland3(container, assets, this.obstacles[2]!); // Bottom-Left Fort Outpost
+    this.renderIsland4(container, assets, this.obstacles[3]!); // Bottom-Right Palm Strip
+
+    // 5. Render Sea Rocks in Open Water Channels
+    this.renderSeaRocks(container, assets);
+  }
+
+  /**
+   * Updates water ripples gently creating a living ocean wave effect.
+   */
+  public updateWater(dt: number, totalTime: number): void {
+    for (const w of this.waterTiles) {
+      const wave = Math.sin(totalTime * 1.8 + w.phase);
+      w.sprite.alpha = 0.18 + wave * 0.08;
+      w.sprite.x = w.baseX + Math.cos(totalTime * 1.2 + w.phase) * 3;
+      w.sprite.y = w.baseY + Math.sin(totalTime * 1.2 + w.phase) * 3;
+    }
+  }
+
+  /**
+   * Helper to tile an area with 9-slice sand coast tiles and pure sand interior.
+   */
+  private buildSandCoast(
+    container: Container,
+    assets: AssetLoader,
+    x: number,
+    y: number,
+    w: number,
+    h: number
+  ): void {
+    const tileDisplay = 60;
+    const cols = Math.round(w / tileDisplay);
+    const rows = Math.round(h / tileDisplay);
+    const tW = w / cols;
+    const tH = h / rows;
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        let tileKey = 'tile_18'; // Solid smooth sand interior
+
+        if (c === 0 && r === 0) tileKey = 'tile_1'; // NW corner
+        else if (c === cols - 1 && r === 0) tileKey = 'tile_3'; // NE corner
+        else if (c === 0 && r === rows - 1) tileKey = 'tile_33'; // SW corner
+        else if (c === cols - 1 && r === rows - 1) tileKey = 'tile_35'; // SE corner
+        else if (r === 0) tileKey = 'tile_2'; // N edge
+        else if (r === rows - 1) tileKey = 'tile_34'; // S edge
+        else if (c === 0) tileKey = 'tile_17'; // W edge
+        else if (c === cols - 1) tileKey = 'tile_19'; // E edge
+        else {
+          tileKey = 'tile_18'; // Clean unified sand
+        }
+
+        const sprite = new Sprite(assets.getTexture(tileKey));
+        sprite.x = x + c * tW;
+        sprite.y = y + r * tH;
+        sprite.width = tW;
+        sprite.height = tH;
+        container.addChild(sprite);
       }
+    }
+  }
 
-      // Sand Beach Base
-      const islandGfx = new Graphics();
-      islandGfx.roundRect(box.x, box.y, box.width, box.height, 42);
-      islandGfx.fill(0xf4d399); // Golden beach sand
-      container.addChild(islandGfx);
+  /**
+   * Helper to tile a lush grass meadow.
+   */
+  private buildGrassMeadow(
+    container: Container,
+    assets: AssetLoader,
+    x: number,
+    y: number,
+    w: number,
+    h: number
+  ): void {
+    const tileDisplay = 55;
+    const cols = Math.round(w / tileDisplay);
+    const rows = Math.round(h / tileDisplay);
+    const tW = w / cols;
+    const tH = h / rows;
 
-      // Lush Grass Interior
-      if (box === this.obstacles[0]) {
-        // Top-Left: Large grass meadow
-        const grassGfx = new Graphics();
-        grassGfx.roundRect(box.x + 40, box.y + 35, box.width - 80, box.height - 70, 24);
-        grassGfx.fill(0x6ca336);
-        container.addChild(grassGfx);
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        let tileKey = 'tile_40'; // Rich center grass
 
-        // Palm tree on top-left
-        const palm = new Sprite(assets.getTexture('tile_74'));
-        palm.anchor.set(0.5);
-        palm.x = box.x + 90;
-        palm.y = box.y + 90;
-        palm.scale.set(1.4);
-        container.addChild(palm);
+        if (c === 0 && r === 0) tileKey = 'tile_23'; // NW grass
+        else if (c === cols - 1 && r === 0) tileKey = 'tile_9'; // NE grass
+        else if (c === 0 && r === rows - 1) tileKey = 'tile_54'; // SW grass
+        else if (c === cols - 1 && r === rows - 1) tileKey = 'tile_57'; // SE grass
+        else if (r === 0) tileKey = 'tile_7'; // N grass edge
+        else if (r === rows - 1) tileKey = 'tile_55'; // S grass edge
+        else if (c === 0) tileKey = 'tile_22'; // W grass edge
+        else if (c === cols - 1) tileKey = 'tile_25'; // E grass edge
+        else {
+          const rand = (c * 11 + r * 17) % 6;
+          if (rand === 1) tileKey = 'tile_24'; // Grass with flowers/daisies
+          else if (rand === 2) tileKey = 'tile_39'; // Grass tufts
+          else tileKey = 'tile_40';
+        }
 
-        // Small rock & bush
-        const bush = new Sprite(assets.getTexture('tile_78'));
-        bush.anchor.set(0.5);
-        bush.x = box.x + 240;
-        bush.y = box.y + 160;
-        container.addChild(bush);
-      } else if (box === this.obstacles[1]) {
-        // Top-Right: Sand island with central rock
-        const rock = new Sprite(assets.getTexture('tile_68'));
-        rock.anchor.set(0.5);
-        rock.x = box.x + box.width / 2;
-        rock.y = box.y + box.height / 2;
-        rock.scale.set(1.2);
-        container.addChild(rock);
-      } else if (box === this.obstacles[2]) {
-        // Bottom-Left: Round sand island with small sprouts
-        const sprout = new Sprite(assets.getTexture('tile_79'));
-        sprout.anchor.set(0.5);
-        sprout.x = box.x + box.width / 2;
-        sprout.y = box.y + box.height / 2;
-        container.addChild(sprout);
-      } else if (box === this.obstacles[3]) {
-        // Bottom-Right: Horizontal grass strip with palm tree
-        const grassStrip = new Graphics();
-        grassStrip.roundRect(box.x + 50, box.y + 70, box.width - 100, 70, 20);
-        grassStrip.fill(0x6ca336);
-        container.addChild(grassStrip);
-
-        const palm = new Sprite(assets.getTexture('tile_74'));
-        palm.anchor.set(0.5);
-        palm.x = box.x + 130;
-        palm.y = box.y + 100;
-        palm.scale.set(1.3);
-        container.addChild(palm);
+        const sprite = new Sprite(assets.getTexture(tileKey));
+        sprite.x = x + c * tW;
+        sprite.y = y + r * tH;
+        sprite.width = tW;
+        sprite.height = tH;
+        container.addChild(sprite);
       }
+    }
+  }
+
+  /**
+   * Top-Left Tropical Island:
+   * Authentic sand coast, lush green interior, coastal fort tower,
+   * palm canopy, sprouts, and stranded rowing dinghy (transparent PNG).
+   */
+  private renderIsland1(container: Container, assets: AssetLoader, box: ObstacleBox): void {
+    // 1. Sand base with real coast tiles
+    this.buildSandCoast(container, assets, box.x, box.y, box.width, box.height);
+
+    // 2. Lush grass meadow inside
+    const grassPadX = 50;
+    const grassPadY = 45;
+    this.buildGrassMeadow(
+      container,
+      assets,
+      box.x + grassPadX,
+      box.y + grassPadY,
+      box.width - grassPadX * 2,
+      box.height - grassPadY * 2
+    );
+
+    // 3. Circular Stone Fort Tower (tile_13 & tile_29)
+    const towerBody = new Sprite(assets.getTexture('tile_29'));
+    towerBody.anchor.set(0.5);
+    towerBody.x = box.x + 230;
+    towerBody.y = box.y + 160;
+    towerBody.scale.set(1.1);
+    container.addChild(towerBody);
+
+    const towerRoof = new Sprite(assets.getTexture('tile_13'));
+    towerRoof.anchor.set(0.5);
+    towerRoof.x = box.x + 230;
+    towerRoof.y = box.y + 160;
+    towerRoof.scale.set(1.1);
+    container.addChild(towerRoof);
+
+    // 4. Large Tropical Palm Canopy (tile_71 & tile_72)
+    const palm1 = new Sprite(assets.getTexture('tile_71'));
+    palm1.anchor.set(0.5);
+    palm1.x = box.x + 105;
+    palm1.y = box.y + 95;
+    palm1.scale.set(1.35);
+    container.addChild(palm1);
+
+    const palm2 = new Sprite(assets.getTexture('tile_72'));
+    palm2.anchor.set(0.5);
+    palm2.x = box.x + 145;
+    palm2.y = box.y + 115;
+    palm2.scale.set(1.1);
+    container.addChild(palm2);
+
+    // 5. Green Foliage Sprouts (tile_87 & tile_88)
+    const sprout1 = new Sprite(assets.getTexture('tile_87'));
+    sprout1.anchor.set(0.5);
+    sprout1.x = box.x + 185;
+    sprout1.y = box.y + 100;
+    container.addChild(sprout1);
+
+    const sprout2 = new Sprite(assets.getTexture('tile_88'));
+    sprout2.anchor.set(0.5);
+    sprout2.x = box.x + 120;
+    sprout2.y = box.y + 175;
+    container.addChild(sprout2);
+
+    // 6. Stranded wooden dinghy on southern beach (transparent sprite)
+    const dinghy = new Sprite(assets.getTexture('dinghy_large_1'));
+    dinghy.anchor.set(0.5);
+    dinghy.x = box.x + 65;
+    dinghy.y = box.y + 205;
+    dinghy.scale.set(1.1);
+    dinghy.rotation = -0.3;
+    container.addChild(dinghy);
+  }
+
+  /**
+   * Top-Right Sand Dune Island:
+   * Pristine desert sands, transparent rocks, sunken cannon, and palm bush.
+   */
+  private renderIsland2(container: Container, assets: AssetLoader, box: ObstacleBox): void {
+    // 1. Sand coast tiles
+    this.buildSandCoast(container, assets, box.x, box.y, box.width, box.height);
+
+    // 2. Central Rock Formations (tile_66, tile_50, tile_49 - all transparent)
+    const mossRock = new Sprite(assets.getTexture('tile_66'));
+    mossRock.anchor.set(0.5);
+    mossRock.x = box.x + box.width / 2;
+    mossRock.y = box.y + box.height / 2 - 15;
+    mossRock.scale.set(1.25);
+    container.addChild(mossRock);
+
+    const smallRock = new Sprite(assets.getTexture('tile_50'));
+    smallRock.anchor.set(0.5);
+    smallRock.x = box.x + box.width / 2 + 40;
+    smallRock.y = box.y + box.height / 2 + 15;
+    container.addChild(smallRock);
+
+    const tinyRock = new Sprite(assets.getTexture('tile_49'));
+    tinyRock.anchor.set(0.5);
+    tinyRock.x = box.x + 75;
+    tinyRock.y = box.y + 90;
+    tinyRock.scale.set(1.1);
+    container.addChild(tinyRock);
+
+    // 3. Desert Palm Shrub (tile_70)
+    const palmBush = new Sprite(assets.getTexture('tile_70'));
+    palmBush.anchor.set(0.5);
+    palmBush.x = box.x + 70;
+    palmBush.y = box.y + 165;
+    palmBush.scale.set(1.2);
+    container.addChild(palmBush);
+
+    // 4. Sunken Cannon in Sand (transparent cannon sprite)
+    const looseCannon = new Sprite(assets.getTexture('cannon_loose'));
+    looseCannon.anchor.set(0.5);
+    looseCannon.x = box.x + 195;
+    looseCannon.y = box.y + 175;
+    looseCannon.rotation = 0.5;
+    looseCannon.scale.set(1.3);
+    container.addChild(looseCannon);
+  }
+
+  /**
+   * Bottom-Left Fortified Outpost Island:
+   * Circular stone fort with battlements, coastal defense cannon, and sand perimeter.
+   */
+  private renderIsland3(container: Container, assets: AssetLoader, box: ObstacleBox): void {
+    // 1. Sand coast
+    this.buildSandCoast(container, assets, box.x, box.y, box.width, box.height);
+
+    // 2. Stone Dock / Pier (tile_76)
+    const dock = new Sprite(assets.getTexture('tile_76'));
+    dock.anchor.set(0.5);
+    dock.x = box.x + 55;
+    dock.y = box.y + box.height / 2;
+    dock.scale.set(1.1);
+    container.addChild(dock);
+
+    // 3. Fort Tower (tile_14 & tile_30)
+    const fortBase = new Sprite(assets.getTexture('tile_30'));
+    fortBase.anchor.set(0.5);
+    fortBase.x = box.x + box.width / 2 + 10;
+    fortBase.y = box.y + box.height / 2;
+    fortBase.scale.set(1.25);
+    container.addChild(fortBase);
+
+    const fortRoof = new Sprite(assets.getTexture('tile_14'));
+    fortRoof.anchor.set(0.5);
+    fortRoof.x = box.x + box.width / 2 + 10;
+    fortRoof.y = box.y + box.height / 2;
+    fortRoof.scale.set(1.25);
+    container.addChild(fortRoof);
+
+    // 4. Coastal Defense Cannon (transparent cannon sprite)
+    const cannon = new Sprite(assets.getTexture('cannon_mobile'));
+    cannon.anchor.set(0.5);
+    cannon.x = box.x + box.width / 2 + 65;
+    cannon.y = box.y + box.height / 2;
+    cannon.scale.set(1.2);
+    container.addChild(cannon);
+
+    // 5. Small rock next to water
+    const rock = new Sprite(assets.getTexture('tile_49'));
+    rock.anchor.set(0.5);
+    rock.x = box.x + 80;
+    rock.y = box.y + 60;
+    container.addChild(rock);
+  }
+
+  /**
+   * Bottom-Right Palm Strip Island:
+   * Elongated island with horizontal lush green meadow, twin palm trees,
+   * palm shrub, and stranded dinghy.
+   */
+  private renderIsland4(container: Container, assets: AssetLoader, box: ObstacleBox): void {
+    // 1. Sand base
+    this.buildSandCoast(container, assets, box.x, box.y, box.width, box.height);
+
+    // 2. Horizontal Green Meadow
+    const grassPadX = 45;
+    const grassPadY = 45;
+    this.buildGrassMeadow(
+      container,
+      assets,
+      box.x + grassPadX,
+      box.y + grassPadY,
+      box.width - grassPadX * 2,
+      box.height - grassPadY * 2
+    );
+
+    // 3. Palm Trees (tile_71)
+    const palmLeft = new Sprite(assets.getTexture('tile_71'));
+    palmLeft.anchor.set(0.5);
+    palmLeft.x = box.x + 110;
+    palmLeft.y = box.y + 95;
+    palmLeft.scale.set(1.3);
+    container.addChild(palmLeft);
+
+    const palmRight = new Sprite(assets.getTexture('tile_71'));
+    palmRight.anchor.set(0.5);
+    palmRight.x = box.x + 250;
+    palmRight.y = box.y + 105;
+    palmRight.scale.set(1.25);
+    container.addChild(palmRight);
+
+    // 4. Palm Bush (tile_70)
+    const bush = new Sprite(assets.getTexture('tile_70'));
+    bush.anchor.set(0.5);
+    bush.x = box.x + 180;
+    bush.y = box.y + 115;
+    container.addChild(bush);
+
+    // 5. Stranded Dinghy on Eastern Beach (transparent sprite)
+    const dinghy = new Sprite(assets.getTexture('dinghy_large_2'));
+    dinghy.anchor.set(0.5);
+    dinghy.x = box.x + box.width - 50;
+    dinghy.y = box.y + 140;
+    dinghy.rotation = 0.25;
+    container.addChild(dinghy);
+  }
+
+  /**
+   * Sea Rocks in open navigation channels.
+   */
+  private renderSeaRocks(container: Container, assets: AssetLoader): void {
+    const rocks = [
+      { box: this.obstacles[4]!, tex: 'tile_67', scale: 1.15 }, // user screenshot rock
+      { box: this.obstacles[5]!, tex: 'tile_66', scale: 1.15 },
+      { box: this.obstacles[6]!, tex: 'tile_50', scale: 1.2 },
+    ];
+
+    for (const r of rocks) {
+      const rockSprite = new Sprite(assets.getTexture(r.tex));
+      rockSprite.anchor.set(0.5);
+      rockSprite.x = r.box.x + r.box.width / 2;
+      rockSprite.y = r.box.y + r.box.height / 2;
+      rockSprite.scale.set(r.scale);
+      container.addChild(rockSprite);
     }
   }
 }
