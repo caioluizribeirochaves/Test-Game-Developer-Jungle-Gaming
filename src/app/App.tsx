@@ -1,0 +1,302 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { AssetLoader } from '@/engine/core/AssetLoader';
+import { GameEngine } from '@/engine/core/GameEngine';
+import {
+  MatchConfig,
+  loadStoredMatchConfig,
+  saveStoredMatchConfig,
+} from '@/engine/config/gameConfig';
+import { MatchRecord, EndReason } from '@/api/types';
+import { getPlayerProfile, getLastMatchResult } from '@/api/outbox';
+import { useRecordMatchMutation, useSyncPendingMatches } from '@/api/queries';
+
+import { MainMenu } from './screens/MainMenu';
+import { OptionsModal } from './screens/OptionsModal';
+import { PauseModal } from './screens/PauseModal';
+import { ResultModal } from './screens/ResultModal';
+import { CaptainsLogModal } from './screens/CaptainsLogModal';
+import { GameHUD } from './hud/GameHUD';
+import { NetworkSimulatorModal } from './dev/NetworkSimulatorModal';
+import { PiratePanel } from './components/PiratePanel';
+
+export type ScreenState = 'LOADING' | 'MENU' | 'PLAYING' | 'OPTIONS' | 'LOG' | 'RESULT';
+
+export const App: React.FC = () => {
+  const [screen, setScreen] = useState<ScreenState>('LOADING');
+  const [loadProgress, setLoadProgress] = useState(0);
+
+  // Snapshot Configuration
+  const [config, setConfig] = useState<MatchConfig>(loadStoredMatchConfig);
+
+  // In-Game Live HUD State (driven by GameEngine events)
+  const [health, setHealth] = useState(100);
+  const [maxHealth, setMaxHealth] = useState(100);
+  const [score, setScore] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState(120);
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Modals & Panels
+  const [logInitialTab, setLogInitialTab] = useState<'ranking' | 'history'>('ranking');
+  const [isChaosOpen, setIsChaosOpen] = useState(false);
+
+  // Last Completed Match Result & Sync State
+  const [lastMatch, setLastMatch] = useState<MatchRecord | null>(getLastMatchResult);
+  const [syncStatus, setSyncStatus] = useState<
+    'idle' | 'pending' | 'success' | 'offline_queued' | 'error'
+  >('idle');
+
+  const canvasContainerRef = useRef<HTMLDivElement | null>(null);
+  const gameEngineRef = useRef<GameEngine | null>(null);
+
+  const recordMatchMutation = useRecordMatchMutation();
+  const syncPendingMutation = useSyncPendingMatches();
+
+  // 1. Initial Asset Loading
+  useEffect(() => {
+    let isMounted = true;
+    AssetLoader.getInstance()
+      .loadAll((ratio) => {
+        if (isMounted) setLoadProgress(ratio);
+      })
+      .then(() => {
+        if (isMounted) {
+          // Attempt syncing any pending offline matches on app launch
+          syncPendingMutation.mutate();
+          setScreen('MENU');
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load assets', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // 2. Keyboard shortcut for Network Simulator (Ctrl+Shift+D or Alt+D)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey && e.shiftKey && e.code === 'KeyD') || (e.altKey && e.code === 'KeyD')) {
+        e.preventDefault();
+        setIsChaosOpen((prev) => !prev);
+      }
+      if (e.code === 'Escape' && screen === 'PLAYING') {
+        gameEngineRef.current?.togglePause();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [screen]);
+
+  // 3. Start Game Session
+  const startGame = () => {
+    setScreen('PLAYING');
+    setIsPaused(false);
+  };
+
+  // 4. Mount PixiJS Canvas when entering PLAYING screen
+  useEffect(() => {
+    if (screen !== 'PLAYING') {
+      if (gameEngineRef.current) {
+        gameEngineRef.current.destroy();
+        gameEngineRef.current = null;
+      }
+      return;
+    }
+
+    if (!canvasContainerRef.current) return;
+
+    // Create GameEngine instance with active snapshot of configuration
+    const engine = new GameEngine(config, {
+      onHealthChange: (curr, max) => {
+        setHealth(curr);
+        setMaxHealth(max);
+      },
+      onScoreChange: (newScore) => {
+        setScore(newScore);
+      },
+      onTimeChange: (remaining) => {
+        setTimeRemaining(remaining);
+      },
+      onPauseChange: (paused) => {
+        setIsPaused(paused);
+      },
+      onGameOver: (reason: EndReason, finalScore: number, finalDuration: number) => {
+        handleGameOver(reason, finalScore, finalDuration);
+      },
+    });
+
+    gameEngineRef.current = engine;
+    engine.initialize(canvasContainerRef.current);
+
+    return () => {
+      engine.destroy();
+      gameEngineRef.current = null;
+    };
+  }, [screen]);
+
+  // 5. Handle Match Completion
+  const handleGameOver = (reason: EndReason, finalScore: number, finalDuration: number) => {
+    const player = getPlayerProfile();
+    const matchId = `match_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+    const matchRecord: MatchRecord = {
+      id: matchId,
+      playerId: player.id,
+      playerName: player.name,
+      date: new Date().toISOString(),
+      score: finalScore,
+      duration: finalDuration,
+      reason,
+      config: { ...config },
+    };
+
+    setLastMatch(matchRecord);
+    setSyncStatus('pending');
+    setScreen('RESULT');
+
+    // Submit via TanStack Query mutation
+    recordMatchMutation.mutate(matchRecord, {
+      onSuccess: (res) => {
+        if (res.offline) {
+          setSyncStatus('offline_queued');
+        } else {
+          setSyncStatus('success');
+        }
+      },
+      onError: () => {
+        setSyncStatus('error');
+      },
+    });
+  };
+
+  const handleRetrySync = () => {
+    if (!lastMatch) return;
+    setSyncStatus('pending');
+    recordMatchMutation.mutate(lastMatch, {
+      onSuccess: (res) => {
+        if (res.offline) {
+          setSyncStatus('offline_queued');
+        } else {
+          setSyncStatus('success');
+        }
+      },
+      onError: () => {
+        setSyncStatus('error');
+      },
+    });
+  };
+
+  return (
+    <div className="relative w-full h-full overflow-hidden select-none bg-[#0c1724]">
+      {/* 1. Loading Screen */}
+      {screen === 'LOADING' && (
+        <div
+          className="w-full h-full flex flex-col items-center justify-center bg-cover bg-center"
+          style={{ backgroundImage: 'url(/assets/ui_scene_background.png)' }}
+        >
+          <PiratePanel size="sm">
+            <h1 className="text-2xl font-black text-[#fce79f] tracking-wider mb-2">
+              HOISTING SAILS...
+            </h1>
+            <p className="text-xs text-[#c5ad83] mb-6">Preparing pirate waters and cannons</p>
+            {/* Loading Bar */}
+            <div className="w-full h-6 bg-[#122438] rounded-full border-2 border-[#9b6f1e] p-0.5 overflow-hidden shadow-inner">
+              <div
+                className="h-full bg-gradient-to-r from-[#dfa837] to-[#fce79f] rounded-full transition-all duration-300"
+                style={{ width: `${Math.round(loadProgress * 100)}%` }}
+              />
+            </div>
+            <span className="text-xs text-amber-200 mt-2 font-mono font-bold">
+              {Math.round(loadProgress * 100)}%
+            </span>
+          </PiratePanel>
+        </div>
+      )}
+
+      {/* 2. Main Menu */}
+      {screen === 'MENU' && (
+        <MainMenu
+          onPlay={startGame}
+          onOptions={() => setScreen('OPTIONS')}
+          onOpenLog={(tab) => {
+            setLogInitialTab(tab);
+            setScreen('LOG');
+          }}
+          onOpenChaosSimulator={() => setIsChaosOpen(true)}
+        />
+      )}
+
+      {/* 3. Options Modal / Screen */}
+      {screen === 'OPTIONS' && (
+        <OptionsModal
+          currentConfig={config}
+          onSaveConfig={(updated) => {
+            setConfig(updated);
+            saveStoredMatchConfig(updated);
+          }}
+          onClose={() => setScreen('MENU')}
+        />
+      )}
+
+      {/* 4. Captain's Log (Ranking & Match History) */}
+      {screen === 'LOG' && (
+        <CaptainsLogModal
+          initialTab={logInitialTab}
+          config={config}
+          onClose={() => setScreen('MENU')}
+        />
+      )}
+
+      {/* 5. In-Game Battle Arena & HUD */}
+      {screen === 'PLAYING' && (
+        <div className="relative w-full h-full">
+          {/* PixiJS Canvas Container */}
+          <div ref={canvasContainerRef} className="w-full h-full absolute inset-0 z-0" />
+
+          {/* Interactive Game HUD */}
+          <GameHUD
+            health={health}
+            maxHealth={maxHealth}
+            score={score}
+            timeRemaining={timeRemaining}
+            onTogglePause={() => gameEngineRef.current?.togglePause()}
+            onVirtualInput={(action, value) =>
+              gameEngineRef.current?.setVirtualInput(action, value)
+            }
+          />
+
+          {/* Pause Modal Overlay */}
+          {isPaused && (
+            <PauseModal
+              onResume={() => gameEngineRef.current?.resumeGame()}
+              onOptions={() => {
+                // Pause remains active while in options
+                setScreen('OPTIONS');
+              }}
+              onMainMenu={() => {
+                // Leaving combat abandons the active match (per README)
+                setScreen('MENU');
+              }}
+            />
+          )}
+        </div>
+      )}
+
+      {/* 6. Battle Result Screen */}
+      {screen === 'RESULT' && lastMatch && (
+        <ResultModal
+          record={lastMatch}
+          syncStatus={syncStatus}
+          onRetrySync={handleRetrySync}
+          onPlayAgain={startGame}
+          onMainMenu={() => setScreen('MENU')}
+        />
+      )}
+
+      {/* 7. Network / MSW Chaos Simulator Modal */}
+      {isChaosOpen && <NetworkSimulatorModal onClose={() => setIsChaosOpen(false)} />}
+    </div>
+  );
+};

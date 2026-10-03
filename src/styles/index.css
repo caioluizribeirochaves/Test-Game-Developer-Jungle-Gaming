@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    font-family: 'Cinzel', serif;
+  }
+}
+
+/* Custom pirate themed typography and utility classes */
+.font-pirate {
+  font-family: 'Pirata One', 'Cinzel', serif;
+}
+
+.text-gold-gradient {
+  background: linear-gradient(180deg, #fff2a3 0%, #dfa837 50%, #9c6f16 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.text-wood-gradient {
+  background: linear-gradient(180deg, #f7edd2 0%, #c9a463 60%, #875c24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Pixel art and sprite rendering crispness */
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Scrollbar styling for Captain's Log and Menus */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(12, 23, 36, 0.6);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #9c6f16;
+  border-radius: 4px;
+  border: 1px solid #dfa837;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #dfa837;
+}
