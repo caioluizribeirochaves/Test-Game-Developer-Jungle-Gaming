@@ -33,7 +33,7 @@ interface RoundControlButtonProps {
   icon: string;
   alt: string;
   keyLabel?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   onPointerDown?: () => void;
   onPointerUp?: () => void;
   onPointerLeave?: () => void;
@@ -64,15 +64,17 @@ const RoundControlButton: React.FC<RoundControlButtonProps> = ({
     : '/assets/png/retina/ui/controls/button_round_normal.png';
 
   const sizeStyles = {
-    sm: 'w-10 h-10 sm:w-11 sm:h-11',
-    md: 'w-14 h-14 sm:w-16 sm:h-16',
-    lg: 'w-16 h-16 sm:w-18 sm:h-18',
+    xs: 'w-8 h-8 sm:w-9 sm:h-9',
+    sm: 'w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11',
+    md: 'w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14',
+    lg: 'w-13 h-13 sm:w-14 sm:h-14 md:w-16 md:h-16',
   }[size];
 
   const iconSizes = {
-    sm: 'w-5 h-5 sm:w-6 sm:h-6',
-    md: 'w-8 h-8 sm:w-9 sm:h-9',
-    lg: 'w-9 h-9 sm:w-10 sm:h-10',
+    xs: 'w-4 h-4 sm:w-4.5 sm:h-4.5',
+    sm: 'w-4.5 h-4.5 sm:w-5 sm:h-5 md:w-5.5 md:h-5.5',
+    md: 'w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8',
+    lg: 'w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9',
   }[size];
 
   return (
@@ -129,9 +131,24 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   onJoystickInput,
 }) => {
   const [isMobile, setIsMobile] = useState(checkIsMobile);
+  const [windowSize, setWindowSize] = useState(() => ({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1280,
+    height: typeof window !== 'undefined' ? window.innerHeight : 720,
+  }));
+  const [showRotateHint, setShowRotateHint] = useState(true);
+
+  const isLandscape = windowSize.width > windowSize.height;
+  const isMobileLandscape = isMobile && isLandscape && windowSize.height <= 520;
+  const isMobilePortrait = isMobile && !isLandscape && windowSize.width <= 600;
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(checkIsMobile());
+    const handleResize = () => {
+      setIsMobile(checkIsMobile());
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -156,113 +173,135 @@ export const GameHUD: React.FC<GameHUDProps> = ({
       : '/assets/png/retina/ui/hud/health_fill_red.png';
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-3 sm:p-5 overflow-hidden select-none">
-      {/* Top Header Bar */}
-      <div className="w-full flex items-start justify-between">
-        {/* Top-Left: Authentic Health Bar Frame with Heart Medallion */}
-        <div className="relative flex items-center gap-2.5 sm:gap-3 pointer-events-auto filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.7)]">
-          {/* Heart Icon Medallion */}
-          <div className="relative z-20 w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center pointer-events-none">
-            <img
-              src="/assets/png/retina/ui/hud/icon_heart.png"
-              alt="Health"
-              className="w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
-            />
-          </div>
-
-          {/* Health Frame with Authentic Fill Asset */}
-          <div className="relative w-[210px] sm:w-[260px] h-[38px] sm:h-[44px] flex items-center">
-            {/* Base Health Frame Graphic (wood + dark groove background) */}
-            <img
-              src="/assets/png/retina/ui/hud/health_frame.png"
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-fill pointer-events-none z-0"
-            />
-            {/* Authentic Fill overlay (clipped by health percentage) */}
-            <div
-              className="absolute inset-0 z-10 overflow-hidden pointer-events-none transition-all duration-200"
-              style={{
-                clipPath:
-                  healthPercent > 0
-                    ? `inset(0 ${Math.max(0, 100 - (10.55 + 0.789 * healthPercent))}% 0 0)`
-                    : 'inset(0 100% 0 0)',
-              }}
-            >
+    <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-1.5 xs:p-2 sm:p-3 md:p-5 overflow-hidden select-none">
+      {/* Top Header Section */}
+      <div className="w-full flex flex-col items-center gap-1 pointer-events-none">
+        {/* Top Header Bar */}
+        <div className="w-full flex items-start justify-between">
+          {/* Top-Left: Authentic Health Bar Frame with Heart Medallion */}
+          <div className="relative flex items-center gap-1.5 xs:gap-2 sm:gap-3 pointer-events-auto filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.7)]">
+            {/* Heart Icon Medallion */}
+            <div className="relative z-20 w-7 h-7 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 flex items-center justify-center pointer-events-none">
               <img
-                src={fillSrc}
-                alt=""
-                aria-hidden="true"
-                className="w-full h-full object-fill pointer-events-none"
+                src="/assets/png/retina/ui/hud/icon_heart.png"
+                alt="Health"
+                className="w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
               />
             </div>
-            {/* Numerical Text Overlay */}
-            <div className="relative z-20 w-full text-center text-xs sm:text-sm font-serif font-black text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-wider pl-2">
-              {health} / {maxHealth}
+
+            {/* Health Frame with Authentic Fill Asset */}
+            <div className="relative w-[130px] xs:w-[155px] sm:w-[195px] md:w-[260px] h-[26px] xs:h-[28px] sm:h-[34px] md:h-[44px] flex items-center">
+              {/* Base Health Frame Graphic (wood + dark groove background) */}
+              <img
+                src="/assets/png/retina/ui/hud/health_frame.png"
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-fill pointer-events-none z-0"
+              />
+              {/* Authentic Fill overlay (clipped by health percentage) */}
+              <div
+                className="absolute inset-0 z-10 overflow-hidden pointer-events-none transition-all duration-200"
+                style={{
+                  clipPath:
+                    healthPercent > 0
+                      ? `inset(0 ${Math.max(0, 100 - (10.55 + 0.789 * healthPercent))}% 0 0)`
+                      : 'inset(0 100% 0 0)',
+                }}
+              >
+                <img
+                  src={fillSrc}
+                  alt=""
+                  aria-hidden="true"
+                  className="w-full h-full object-fill pointer-events-none"
+                />
+              </div>
+              {/* Numerical Text Overlay */}
+              <div className="relative z-20 w-full text-center text-[10px] xs:text-[11px] sm:text-xs md:text-sm font-serif font-black text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-wider pl-1 sm:pl-2">
+                {health} / {maxHealth}
+              </div>
             </div>
           </div>
+
+          {/* Top-Right: Score, Time & Pause Button */}
+          <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 pointer-events-auto">
+            {/* Score Counter Panel - Centered Content */}
+            <div className="relative w-[64px] xs:w-[72px] sm:w-[90px] md:w-[115px] h-[26px] xs:h-[28px] sm:h-[34px] md:h-[42px] flex items-center justify-center gap-1 xs:gap-1.5 sm:gap-2 px-1.5 xs:px-2 sm:px-3 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
+              <img
+                src="/assets/png/retina/ui/hud/counter_panel.png"
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+              />
+              <img
+                src="/assets/png/retina/ui/hud/icon_score.png"
+                alt="Score"
+                className="relative z-10 w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 md:w-5.5 md:h-5.5 object-contain pointer-events-none drop-shadow"
+              />
+              <span className="relative z-10 font-bold text-xs sm:text-sm md:text-base tracking-wider text-yellow-300 font-mono drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                {score}
+              </span>
+            </div>
+
+            {/* Time Counter Panel - Centered Content */}
+            <div className="relative w-[68px] xs:w-[76px] sm:w-[96px] md:w-[125px] h-[26px] xs:h-[28px] sm:h-[34px] md:h-[42px] flex items-center justify-center gap-1 xs:gap-1.5 sm:gap-2 px-1.5 xs:px-2 sm:px-3 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
+              <img
+                src="/assets/png/retina/ui/hud/counter_panel.png"
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+              />
+              <img
+                src="/assets/png/retina/ui/hud/icon_time.png"
+                alt="Time"
+                className="relative z-10 w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 md:w-5.5 md:h-5.5 object-contain pointer-events-none drop-shadow"
+              />
+              <span
+                className={`relative z-10 font-mono font-bold text-xs sm:text-sm md:text-base tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] ${
+                  timeRemaining <= 10 ? 'text-red-400 animate-pulse' : 'text-[#f5e6be]'
+                }`}
+              >
+                {timeFormatted}
+              </span>
+            </div>
+
+            {/* Pause Button framed with round button asset */}
+            <RoundControlButton
+              icon="/assets/png/retina/ui/controls/icon_pause.png"
+              alt="Pause"
+              size={isMobileLandscape || isMobilePortrait ? 'xs' : 'sm'}
+              onClick={onTogglePause}
+              ariaLabel="Pause Game"
+            />
+          </div>
         </div>
 
-        {/* Top-Right: Score, Time & Pause Button */}
-        <div className="flex items-center gap-2 sm:gap-3 pointer-events-auto">
-          {/* Score Counter Panel - Centered Content */}
-          <div className="relative w-[105px] sm:w-[115px] h-[38px] sm:h-[42px] flex items-center justify-center gap-2 sm:gap-2.5 px-3 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
-            <img
-              src="/assets/png/retina/ui/hud/counter_panel.png"
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-fill pointer-events-none"
-            />
-            <img
-              src="/assets/png/retina/ui/hud/icon_score.png"
-              alt="Score"
-              className="relative z-10 w-5 h-5 sm:w-5.5 sm:h-5.5 object-contain pointer-events-none drop-shadow"
-            />
-            <span className="relative z-10 font-bold text-sm sm:text-base tracking-wider text-yellow-300 font-mono drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-              {score}
-            </span>
-          </div>
-
-          {/* Time Counter Panel - Centered Content */}
-          <div className="relative w-[115px] sm:w-[125px] h-[38px] sm:h-[42px] flex items-center justify-center gap-2 sm:gap-2.5 px-3 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
-            <img
-              src="/assets/png/retina/ui/hud/counter_panel.png"
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-fill pointer-events-none"
-            />
-            <img
-              src="/assets/png/retina/ui/hud/icon_time.png"
-              alt="Time"
-              className="relative z-10 w-5 h-5 sm:w-5.5 sm:h-5.5 object-contain pointer-events-none drop-shadow"
-            />
-            <span
-              className={`relative z-10 font-mono font-bold text-sm sm:text-base tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] ${
-                timeRemaining <= 10 ? 'text-red-400 animate-pulse' : 'text-[#f5e6be]'
-              }`}
+        {/* Portrait Mode Advisory Hint: Rotate to Landscape (pinned just below header) */}
+        {isMobilePortrait && showRotateHint && (
+          <div className="pointer-events-auto flex items-center gap-2 px-3 py-1 rounded-full bg-black/80 border border-amber-600/70 shadow-2xl text-[10px] sm:text-xs text-amber-200 mt-0.5">
+            <span className="text-sm">🔄</span>
+            <span>Vire na horizontal para melhor visualização!</span>
+            <button
+              onClick={() => setShowRotateHint(false)}
+              className="ml-1 text-stone-400 hover:text-white font-bold text-xs px-1"
+              aria-label="Fechar aviso"
             >
-              {timeFormatted}
-            </span>
+              ✕
+            </button>
           </div>
-
-          {/* Pause Button framed with round button asset */}
-          <RoundControlButton
-            icon="/assets/png/retina/ui/controls/icon_pause.png"
-            alt="Pause"
-            size="sm"
-            onClick={onTogglePause}
-            ariaLabel="Pause Game"
-          />
-        </div>
+        )}
       </div>
 
       {/* Bottom Controls */}
       {isMobile ? (
         /* Mobile Controls: Virtual Joystick on Left (Image 2) & Triangular Cannon Buttons on Right (Image 1) */
-        <div className="w-full flex items-end justify-between pb-2 px-1 sm:px-3">
+        <div className="w-full flex items-end justify-between pb-1 sm:pb-2 px-1 sm:px-3">
           {/* Left: Virtual Joystick (Image 2) */}
           <div className="pointer-events-auto filter drop-shadow-[0_6px_14px_rgba(0,0,0,0.7)]">
-            <VirtualJoystick onChange={handleJoystickChange} size={142} knobSize={60} />
+            <VirtualJoystick
+              onChange={handleJoystickChange}
+              size={isMobileLandscape ? 112 : isMobilePortrait ? 122 : 144}
+              knobSize={isMobileLandscape ? 48 : isMobilePortrait ? 52 : 60}
+            />
           </div>
 
           {/* Right: Triangular Cannon Fire Buttons Cluster (Image 1) */}
@@ -271,19 +310,19 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             <RoundControlButton
               icon="/assets/png/retina/ui/controls/icon_fire_front.png"
               alt="Bow Cannon"
-              size="lg"
-              className="mb-1.5"
+              size={isMobileLandscape ? 'md' : isMobilePortrait ? 'md' : 'lg'}
+              className="mb-1"
               onPointerDown={() => onVirtualInput('fireFront', true)}
               onPointerUp={() => onVirtualInput('fireFront', false)}
               onPointerLeave={() => onVirtualInput('fireFront', false)}
               ariaLabel="Fire Frontal Cannon"
             />
             {/* Bottom Row: Port Broadside (Left) & Starboard Broadside (Right) */}
-            <div className="flex items-center gap-4 sm:gap-5">
+            <div className={`flex items-center ${isMobileLandscape ? 'gap-2.5 sm:gap-3' : 'gap-3.5 sm:gap-5'}`}>
               <RoundControlButton
                 icon="/assets/png/retina/ui/controls/icon_fire_left.png"
                 alt="Port Broadside"
-                size="lg"
+                size={isMobileLandscape ? 'md' : isMobilePortrait ? 'md' : 'lg'}
                 onPointerDown={() => onVirtualInput('fireLeft', true)}
                 onPointerUp={() => onVirtualInput('fireLeft', false)}
                 onPointerLeave={() => onVirtualInput('fireLeft', false)}
@@ -292,7 +331,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               <RoundControlButton
                 icon="/assets/png/retina/ui/controls/icon_fire_right.png"
                 alt="Starboard Broadside"
-                size="lg"
+                size={isMobileLandscape ? 'md' : isMobilePortrait ? 'md' : 'lg'}
                 onPointerDown={() => onVirtualInput('fireRight', true)}
                 onPointerUp={() => onVirtualInput('fireRight', false)}
                 onPointerLeave={() => onVirtualInput('fireRight', false)}

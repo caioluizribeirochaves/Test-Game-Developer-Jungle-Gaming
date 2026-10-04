@@ -12,10 +12,10 @@ export const PiratePanel: React.FC<PiratePanelProps> = ({
   size = 'md',
 }) => {
   if (size === 'menu') {
-    // Exact menu panel matching reference image (768x960 aspect ratio)
+    // Responsive menu panel: constrained by both max width and max height for landscape phones
     return (
       <div
-        className={`relative w-[92vw] max-w-[440px] aspect-[768/960] select-none flex flex-col filter drop-shadow-[0_20px_40px_rgba(0,0,0,0.85)] ${className}`}
+        className={`relative w-[92vw] max-w-[min(440px,calc(92vh*768/960))] aspect-[768/960] max-h-[92vh] select-none flex flex-col filter drop-shadow-[0_20px_40px_rgba(0,0,0,0.85)] ${className}`}
       >
         <img
           src="/assets/png/retina/ui/menu/panel_menu.png"
@@ -23,7 +23,7 @@ export const PiratePanel: React.FC<PiratePanelProps> = ({
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-fill pointer-events-none"
         />
-        <div className="relative z-10 w-full h-full px-7 sm:px-9 py-8 sm:py-10 flex flex-col items-center justify-between">
+        <div className="relative z-10 w-full h-full px-5 sm:px-7 md:px-9 py-4 sm:py-6 md:py-8 flex flex-col items-center justify-between">
           {children}
         </div>
       </div>

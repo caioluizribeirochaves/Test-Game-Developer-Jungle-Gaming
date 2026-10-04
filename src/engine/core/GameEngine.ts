@@ -187,18 +187,51 @@ export class GameEngine {
     const screenW = this.app.screen.width;
     const screenH = this.app.screen.height;
 
-    // Maintain 1920x1080 aspect ratio within container
-    const scale = Math.min(screenW / this.map.width, screenH / this.map.height);
-    this.rootContainer.scale.set(scale);
+    const isLandscape = screenW > screenH;
+    const isMobileLandscape = isLandscape && screenH <= 520;
+    const isMobilePortrait = !isLandscape && screenW <= 600;
 
-    // Center arena in viewport
-    this.rootContainer.x = (screenW - this.map.width * scale) / 2;
-    this.rootContainer.y = (screenH - this.map.height * scale) / 2;
+    let scale: number;
+    let arenaX: number;
+    let arenaY: number;
+
+    if (isMobileLandscape) {
+      // In mobile landscape, leave safe vertical headroom for the compact top HUD (34px)
+      // and center the arena within the remaining height so islands are never covered
+      const topHudSafeInset = 34;
+      const bottomSafeInset = 8;
+      const availableH = Math.max(180, screenH - topHudSafeInset - bottomSafeInset);
+      scale = Math.min(screenW / this.map.width, availableH / this.map.height);
+
+      arenaX = (screenW - this.map.width * scale) / 2;
+      arenaY = topHudSafeInset + (availableH - this.map.height * scale) / 2;
+    } else if (isMobilePortrait) {
+      // In mobile portrait, default width scale (0.19-0.20) makes the arena too tiny.
+      // We scale proportionally larger while fitting comfortably between top HUD and bottom controls
+      const topSafeInset = 54;
+      const bottomSafeInset = 140;
+      const availableH = Math.max(260, screenH - topSafeInset - bottomSafeInset);
+      // Give a ~22% boost to visibility on vertical screens, clamped to vertical clearance
+      const baseScale = screenW / this.map.width;
+      scale = Math.min(baseScale * 1.22, availableH / this.map.height);
+
+      arenaX = (screenW - this.map.width * scale) / 2;
+      arenaY = topSafeInset + (availableH - this.map.height * scale) / 2;
+    } else {
+      // Standard desktop, laptop, or tablet scale
+      scale = Math.min(screenW / this.map.width, screenH / this.map.height);
+      arenaX = (screenW - this.map.width * scale) / 2;
+      arenaY = (screenH - this.map.height * scale) / 2;
+    }
+
+    this.rootContainer.scale.set(scale);
+    this.rootContainer.x = arenaX;
+    this.rootContainer.y = arenaY;
 
     if (this.waterBackground) {
       this.waterBackground.width = screenW;
       this.waterBackground.height = screenH;
-      this.waterBackground.tileScale.set(scale);
+      this.waterBackground.tileScale.set(Math.max(0.32, scale));
     }
   }
 
