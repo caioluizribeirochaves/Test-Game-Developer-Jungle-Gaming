@@ -8,7 +8,20 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  body {
+  html, body, #root {
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     user-select: none;
     -webkit-user-select: none;
     touch-action: manipulation;
@@ -40,22 +53,22 @@
   image-rendering: crisp-edges;
 }
 
-/* Scrollbar styling for Captain's Log and Menus */
-::-webkit-scrollbar {
-  width: 8px;
+/* Scrollbar styling scoped only to scrollable modal lists (never full page) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
 }
 
-::-webkit-scrollbar-track {
+.custom-scrollbar::-webkit-scrollbar-track {
   background: rgba(12, 23, 36, 0.6);
   border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb {
+.custom-scrollbar::-webkit-scrollbar-thumb {
   background: #9c6f16;
   border-radius: 4px;
   border: 1px solid #dfa837;
 }
 
-::-webkit-scrollbar-thumb:hover {
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #dfa837;
 }

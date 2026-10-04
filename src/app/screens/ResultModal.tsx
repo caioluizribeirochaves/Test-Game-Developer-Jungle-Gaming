@@ -34,44 +34,44 @@ export const ResultModal: React.FC<ResultModalProps> = ({
       {/* Slight dark overlay for contrast */}
       <div className="absolute inset-0 bg-black/35 pointer-events-none" />
 
-      <PiratePanel size="md" className="z-10">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-[#fce79f] tracking-wider mb-2 drop-shadow-md">
+      <PiratePanel size="md" className="z-10 max-h-[92dvh] p-2 sm:p-4">
+        <h2 className="text-xl sm:text-3xl font-extrabold text-[#fce79f] tracking-wider mb-1 sm:mb-2 drop-shadow-md">
           BATTLE COMPLETE
         </h2>
 
         {/* Large Score Number */}
-        <div className="text-6xl sm:text-7xl font-black text-[#fce79f] my-2 drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] font-mono">
+        <div className="text-4xl xs:text-5xl sm:text-7xl font-black text-[#fce79f] my-1 sm:my-2 drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] font-mono">
           {record.score}
         </div>
 
         {/* Match Summary Line */}
-        <div className="text-xs sm:text-sm font-bold text-[#c5ad83] uppercase tracking-wider mb-4">
+        <div className="text-[10px] xs:text-xs sm:text-sm font-bold text-[#c5ad83] uppercase tracking-wider mb-2 sm:mb-3">
           POINTS • {durationFormatted} • {reasonLabel}
         </div>
 
         {/* Match Recording Sync Status */}
-        <div className="w-full flex items-center justify-center mb-6">
+        <div className="w-full flex items-center justify-center mb-3 sm:mb-5">
           {syncStatus === 'pending' && (
-            <div className="text-xs text-amber-300 flex items-center gap-1.5 animate-pulse">
+            <div className="text-[11px] sm:text-xs text-amber-300 flex items-center gap-1.5 animate-pulse">
               <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping" />
               Recording in Captain's Log...
             </div>
           )}
 
           {syncStatus === 'success' && (
-            <div className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+            <div className="text-[11px] sm:text-xs text-emerald-400 font-semibold flex items-center gap-1">
               <span>✓</span> Battle recorded in Captain's Logs.
             </div>
           )}
 
           {(syncStatus === 'offline_queued' || syncStatus === 'error') && (
             <div className="flex flex-col items-center gap-1">
-              <span className="text-xs text-amber-400">
+              <span className="text-[11px] sm:text-xs text-amber-400">
                 ⚠ Network issue. Match saved locally.
               </span>
               <button
                 onClick={onRetrySync}
-                className="text-xs text-sky-400 underline hover:text-sky-300 cursor-pointer font-bold"
+                className="text-[11px] sm:text-xs text-sky-400 underline hover:text-sky-300 cursor-pointer font-bold"
               >
                 Retry Sync Now
               </button>
@@ -79,13 +79,13 @@ export const ResultModal: React.FC<ResultModalProps> = ({
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col gap-3 w-full items-center">
-          <PirateButton variant="primary" size="md" onClick={onPlayAgain}>
+        {/* Action Buttons (side by side on mobile for compact vertical fit) */}
+        <div className="flex flex-row gap-2 sm:gap-3 w-full items-center justify-center">
+          <PirateButton variant="primary" size="sm" onClick={onPlayAgain}>
             PLAY AGAIN
           </PirateButton>
 
-          <PirateButton variant="primary" size="md" onClick={onMainMenu}>
+          <PirateButton variant="primary" size="sm" onClick={onMainMenu}>
             MAIN MENU
           </PirateButton>
         </div>

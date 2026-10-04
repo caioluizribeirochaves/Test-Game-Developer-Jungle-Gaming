@@ -195,7 +195,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full h-full overflow-hidden select-none bg-[#0c1724]">
+    <div className="relative w-full h-full min-h-full max-h-full overflow-hidden select-none bg-[#0c1724] flex flex-col">
       {/* 1. Loading Screen */}
       {screen === 'LOADING' && (
         <div

@@ -173,7 +173,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
       : '/assets/png/retina/ui/hud/health_fill_red.png';
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-1.5 xs:p-2 sm:p-3 md:p-5 overflow-hidden select-none">
+    <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between pt-[max(0.4rem,env(safe-area-inset-top))] pb-[max(0.6rem,env(safe-area-inset-bottom))] pl-[max(0.6rem,env(safe-area-inset-left))] pr-[max(0.6rem,env(safe-area-inset-right))] p-1 xs:p-2 sm:p-3 md:p-5 overflow-hidden select-none">
       {/* Top Header Section */}
       <div className="w-full flex flex-col items-center gap-1 pointer-events-none">
         {/* Top Header Bar */}
@@ -294,13 +294,13 @@ export const GameHUD: React.FC<GameHUDProps> = ({
       {/* Bottom Controls */}
       {isMobile ? (
         /* Mobile Controls: Virtual Joystick on Left (Image 2) & Triangular Cannon Buttons on Right (Image 1) */
-        <div className="w-full flex items-end justify-between pb-1 sm:pb-2 px-1 sm:px-3">
+        <div className="w-full flex items-end justify-between pb-0.5 sm:pb-1.5 px-0.5 sm:px-2">
           {/* Left: Virtual Joystick (Image 2) */}
           <div className="pointer-events-auto filter drop-shadow-[0_6px_14px_rgba(0,0,0,0.7)]">
             <VirtualJoystick
               onChange={handleJoystickChange}
-              size={isMobileLandscape ? 112 : isMobilePortrait ? 122 : 144}
-              knobSize={isMobileLandscape ? 48 : isMobilePortrait ? 52 : 60}
+              size={isMobileLandscape ? 98 : isMobilePortrait ? 114 : 140}
+              knobSize={isMobileLandscape ? 42 : isMobilePortrait ? 48 : 58}
             />
           </div>
 
@@ -310,7 +310,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             <RoundControlButton
               icon="/assets/png/retina/ui/controls/icon_fire_front.png"
               alt="Bow Cannon"
-              size={isMobileLandscape ? 'md' : isMobilePortrait ? 'md' : 'lg'}
+              size={isMobileLandscape ? 'sm' : isMobilePortrait ? 'sm' : 'lg'}
               className="mb-1"
               onPointerDown={() => onVirtualInput('fireFront', true)}
               onPointerUp={() => onVirtualInput('fireFront', false)}
@@ -318,11 +318,11 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               ariaLabel="Fire Frontal Cannon"
             />
             {/* Bottom Row: Port Broadside (Left) & Starboard Broadside (Right) */}
-            <div className={`flex items-center ${isMobileLandscape ? 'gap-2.5 sm:gap-3' : 'gap-3.5 sm:gap-5'}`}>
+            <div className={`flex items-center ${isMobileLandscape ? 'gap-2 sm:gap-2.5' : 'gap-2.5 sm:gap-4'}`}>
               <RoundControlButton
                 icon="/assets/png/retina/ui/controls/icon_fire_left.png"
                 alt="Port Broadside"
-                size={isMobileLandscape ? 'md' : isMobilePortrait ? 'md' : 'lg'}
+                size={isMobileLandscape ? 'sm' : isMobilePortrait ? 'sm' : 'lg'}
                 onPointerDown={() => onVirtualInput('fireLeft', true)}
                 onPointerUp={() => onVirtualInput('fireLeft', false)}
                 onPointerLeave={() => onVirtualInput('fireLeft', false)}
@@ -331,7 +331,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               <RoundControlButton
                 icon="/assets/png/retina/ui/controls/icon_fire_right.png"
                 alt="Starboard Broadside"
-                size={isMobileLandscape ? 'md' : isMobilePortrait ? 'md' : 'lg'}
+                size={isMobileLandscape ? 'sm' : isMobilePortrait ? 'sm' : 'lg'}
                 onPointerDown={() => onVirtualInput('fireRight', true)}
                 onPointerUp={() => onVirtualInput('fireRight', false)}
                 onPointerLeave={() => onVirtualInput('fireRight', false)}

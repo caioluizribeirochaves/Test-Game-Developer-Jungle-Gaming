@@ -12,18 +12,18 @@ export const PiratePanel: React.FC<PiratePanelProps> = ({
   size = 'md',
 }) => {
   if (size === 'menu') {
-    // Responsive menu panel: constrained by both max width and max height for landscape phones
+    // Responsive menu panel using authentic 9-slice border image to seamlessly frame contents without spill
     return (
       <div
-        className={`relative w-[92vw] max-w-[min(440px,calc(92vh*768/960))] aspect-[768/960] max-h-[92vh] select-none flex flex-col filter drop-shadow-[0_20px_40px_rgba(0,0,0,0.85)] ${className}`}
+        className={`relative z-10 w-[92vw] max-w-[420px] select-none filter drop-shadow-[0_20px_40px_rgba(0,0,0,0.85)] ${className}`}
+        style={{
+          borderImageSource: "url('/assets/png/retina/ui/menu/panel_menu.png')",
+          borderImageSlice: '80 64 80 64 fill',
+          borderImageWidth: '32px 28px 32px 28px',
+          borderImageRepeat: 'stretch',
+        }}
       >
-        <img
-          src="/assets/png/retina/ui/menu/panel_menu.png"
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-fill pointer-events-none"
-        />
-        <div className="relative z-10 w-full h-full px-5 sm:px-7 md:px-9 py-4 sm:py-6 md:py-8 flex flex-col items-center justify-between">
+        <div className="relative z-10 w-full h-full px-4 xs:px-6 sm:px-8 py-3 xs:py-4 sm:py-6 flex flex-col items-center justify-between">
           {children}
         </div>
       </div>

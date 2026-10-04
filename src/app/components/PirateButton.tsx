@@ -1,9 +1,10 @@
 import React from 'react';
+import { twMerge } from 'tailwind-merge';
 import { AudioManager } from '@/engine/audio/AudioManager';
 
 export interface PirateButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'round' | 'tabActive' | 'tabInactive';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   icon?: 'plus' | 'minus' | 'turn_left' | 'turn_right' | 'close' | 'pause' | 'play' | 'restart' | 'settings' | string;
   children?: React.ReactNode;
 }
@@ -49,9 +50,10 @@ export const PirateButton: React.FC<PirateButtonProps> = ({
     else if (isPressed) frame = '/assets/png/retina/ui/menu/button_primary_pressed.png';
     else if (isHovered) frame = '/assets/png/retina/ui/menu/button_primary_hover.png';
 
-    let sizeClasses = 'w-[230px] h-[66px] text-base sm:text-lg';
-    if (size === 'lg') sizeClasses = 'w-[260px] h-[74px] text-lg sm:text-xl';
-    if (size === 'sm') sizeClasses = 'w-[175px] h-[52px] text-xs sm:text-sm';
+    let sizeClasses = 'w-[190px] xs:w-[210px] sm:w-[230px] h-[48px] xs:h-[56px] sm:h-[66px] text-xs xs:text-sm sm:text-lg';
+    if (size === 'lg') sizeClasses = 'w-[220px] xs:w-[240px] sm:w-[260px] h-[56px] xs:h-[64px] sm:h-[74px] text-sm xs:text-base sm:text-xl';
+    if (size === 'sm') sizeClasses = 'w-[160px] xs:w-[175px] h-[40px] xs:h-[48px] sm:h-[52px] text-[11px] xs:text-xs sm:text-sm';
+    if (size === 'xs') sizeClasses = 'w-[135px] xs:w-[150px] h-[34px] xs:h-[40px] text-[10px] xs:text-[11px]';
 
     return (
       <button
@@ -61,11 +63,14 @@ export const PirateButton: React.FC<PirateButtonProps> = ({
         onMouseDown={() => setIsPressed(true)}
         onMouseUp={() => setIsPressed(false)}
         disabled={disabled}
-        className={`relative flex items-center justify-center select-none cursor-pointer transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:pointer-events-none ${
+        className={twMerge(
+          'relative flex items-center justify-center select-none cursor-pointer transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:pointer-events-none',
           isHovered
             ? 'scale-[1.04] filter drop-shadow-[0_4px_14px_rgba(223,168,55,0.45)] brightness-105'
-            : 'filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.6)]'
-        } ${sizeClasses} ${className}`}
+            : 'filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.6)]',
+          sizeClasses,
+          className
+        )}
         {...props}
       >
         <img
@@ -92,10 +97,11 @@ export const PirateButton: React.FC<PirateButtonProps> = ({
     let frame = '/assets/png/retina/ui/menu/button_secondary_normal.png';
     if (isPressed) frame = '/assets/png/retina/ui/menu/button_secondary_pressed.png';
 
-    let sizeClasses = 'w-[165px] sm:w-[190px] h-[48px] sm:h-[50px] text-[10px] sm:text-xs';
-    if (size === 'lg') sizeClasses = 'w-[210px] h-[58px] text-xs sm:text-sm';
-    if (size === 'sm') sizeClasses = 'w-[145px] sm:w-[160px] h-[42px] text-[9px] sm:text-[10px]';
-    if (size === 'md') sizeClasses = 'w-[175px] sm:w-[200px] h-[48px] sm:h-[50px] text-[10px] sm:text-xs';
+    let sizeClasses = 'w-[135px] xs:w-[155px] sm:w-[185px] h-[36px] xs:h-[42px] sm:h-[50px] text-[9px] xs:text-[10px] sm:text-xs';
+    if (size === 'lg') sizeClasses = 'w-[180px] xs:w-[200px] sm:w-[210px] h-[46px] xs:h-[52px] sm:h-[58px] text-[11px] xs:text-xs sm:text-sm';
+    if (size === 'sm') sizeClasses = 'w-[115px] xs:w-[130px] sm:w-[150px] h-[32px] xs:h-[36px] sm:h-[42px] text-[8.5px] xs:text-[9px] sm:text-[10px]';
+    if (size === 'xs') sizeClasses = 'w-[100px] xs:w-[115px] h-[28px] xs:h-[32px] text-[8px] xs:text-[8.5px]';
+    if (size === 'md') sizeClasses = 'w-[135px] xs:w-[155px] sm:w-[185px] h-[36px] xs:h-[42px] sm:h-[50px] text-[9px] xs:text-[10px] sm:text-xs';
 
     return (
       <button
@@ -105,11 +111,14 @@ export const PirateButton: React.FC<PirateButtonProps> = ({
         onMouseDown={() => setIsPressed(true)}
         onMouseUp={() => setIsPressed(false)}
         disabled={disabled}
-        className={`relative flex items-center justify-center select-none cursor-pointer transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:pointer-events-none ${
+        className={twMerge(
+          'relative flex items-center justify-center select-none cursor-pointer transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:pointer-events-none',
           isHovered
             ? 'scale-[1.04] filter drop-shadow-[0_4px_12px_rgba(223,168,55,0.45)] brightness-105'
-            : 'filter drop-shadow-[0_3px_8px_rgba(0,0,0,0.5)]'
-        } ${sizeClasses} ${className}`}
+            : 'filter drop-shadow-[0_3px_8px_rgba(0,0,0,0.5)]',
+          sizeClasses,
+          className
+        )}
         {...props}
       >
         <img

@@ -82,8 +82,8 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
     <div
       className={
         isInGame
-          ? 'absolute inset-0 z-50 bg-black/55 backdrop-blur-[2.5px] flex flex-col items-center justify-center overflow-x-hidden overflow-y-auto p-4 sm:p-6'
-          : 'relative w-full h-full flex flex-col items-center justify-center overflow-x-hidden overflow-y-auto p-4 sm:p-6 select-none'
+          ? 'absolute inset-0 z-50 bg-black/55 backdrop-blur-[2.5px] flex flex-col items-center justify-center overflow-hidden p-2 sm:p-4'
+          : 'relative w-full h-full flex flex-col items-center justify-center overflow-hidden p-2 sm:p-4 select-none'
       }
     >
       {!isInGame && (
@@ -97,8 +97,8 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
         </>
       )}
 
-      <PiratePanel size="md" className="z-10">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-[#fce79f] tracking-wider mb-5 drop-shadow-md">
+      <PiratePanel size="md" className="z-10 max-h-[92dvh] overflow-y-auto custom-scrollbar p-1.5 sm:p-4">
+        <h2 className="text-xl sm:text-3xl font-extrabold text-[#fce79f] tracking-wider mb-3 sm:mb-5 drop-shadow-md">
           OPTIONS
         </h2>
 

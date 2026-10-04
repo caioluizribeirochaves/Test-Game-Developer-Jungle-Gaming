@@ -59,7 +59,7 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
   };
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center overflow-x-hidden overflow-y-auto p-4 sm:p-6 select-none">
+    <div className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden p-2 sm:p-4 select-none">
       {/* Subtle darkened and slightly blurred background scene for high contrast focus */}
       <div
         className="absolute inset-0 bg-cover bg-center filter blur-[2.5px] scale-105 pointer-events-none"
@@ -67,9 +67,9 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
       />
       <div className="absolute inset-0 bg-black/35 pointer-events-none" />
 
-      <PiratePanel size="wide" className="z-10">
+      <PiratePanel size="wide" className="z-10 max-h-[92dvh] overflow-y-auto custom-scrollbar p-1.5 sm:p-4">
         {/* Title */}
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-[#fce79f] tracking-wider mb-3 drop-shadow-md">
+        <h2 className="text-xl sm:text-3xl font-extrabold text-[#fce79f] tracking-wider mb-2 sm:mb-3 drop-shadow-md">
           CAPTAIN'S LOG
         </h2>
 

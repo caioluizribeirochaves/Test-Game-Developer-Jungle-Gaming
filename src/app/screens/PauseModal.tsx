@@ -30,31 +30,33 @@ export const PauseModal: React.FC<PauseModalProps> = ({
         </p>
 
         {!showControlsInline ? (
-          <div className="flex flex-col gap-3 w-full items-center">
-            <PirateButton variant="primary" size="md" onClick={onResume}>
-              RESUME
-            </PirateButton>
+          <div className="flex flex-col items-center w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 w-full items-center justify-items-center mb-2">
+              <PirateButton variant="primary" size="sm" onClick={onResume}>
+                RESUME
+              </PirateButton>
 
-            <PirateButton variant="primary" size="md" onClick={onOptions}>
-              OPTIONS
-            </PirateButton>
+              <PirateButton variant="primary" size="sm" onClick={onOptions}>
+                OPTIONS
+              </PirateButton>
 
-            <PirateButton
-              variant="primary"
-              size="md"
-              onClick={() => {
-                if (onControls) onControls();
-                else setShowControlsInline(true);
-              }}
-            >
-              CONTROLS
-            </PirateButton>
+              <PirateButton
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  if (onControls) onControls();
+                  else setShowControlsInline(true);
+                }}
+              >
+                CONTROLS
+              </PirateButton>
 
-            <PirateButton variant="primary" size="md" onClick={onMainMenu}>
-              MAIN MENU
-            </PirateButton>
+              <PirateButton variant="primary" size="sm" onClick={onMainMenu}>
+                MAIN MENU
+              </PirateButton>
+            </div>
 
-            <p className="text-[10px] text-stone-400 mt-2 text-center">
+            <p className="text-[10px] text-stone-400 mt-1 text-center">
               Leaving ends this battle without recording it.
             </p>
           </div>
