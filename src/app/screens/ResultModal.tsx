@@ -60,7 +60,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
 
           {syncStatus === 'success' && (
             <div className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
-              <span>✓</span> Confirmed in Captain's Log
+              <span>✓</span> Battle recorded in Captain's Logs.
             </div>
           )}
 
@@ -81,7 +81,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-3 w-full items-center">
-          <PirateButton variant="primary" size="lg" onClick={onPlayAgain}>
+          <PirateButton variant="primary" size="md" onClick={onPlayAgain}>
             PLAY AGAIN
           </PirateButton>
 

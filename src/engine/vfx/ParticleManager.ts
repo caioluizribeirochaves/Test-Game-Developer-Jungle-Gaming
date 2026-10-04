@@ -151,10 +151,10 @@ export class ParticleManager {
 
       crew.sprite.x = crew.x;
 
-      // Smooth fadeout during final 1.2 seconds
+      // Snappy and smooth fadeout during final 0.8 seconds
       const timeLeft = crew.totalLifetime - crew.elapsed;
-      if (timeLeft < 1.2) {
-        crew.sprite.alpha = Math.max(0, timeLeft / 1.2);
+      if (timeLeft < 0.8) {
+        crew.sprite.alpha = Math.max(0, timeLeft / 0.8);
       }
     }
 
@@ -385,8 +385,8 @@ export class ParticleManager {
         vy: Math.sin(angle) * speed,
         rotationSpeed: (Math.random() - 0.5) * 9,
         elapsed: 0,
-        airDuration: 0.6 + Math.random() * 0.25,
-        totalLifetime: 4.5 + Math.random() * 1.5,
+        airDuration: 0.45 + Math.random() * 0.15,
+        totalLifetime: 1.8 + Math.random() * 0.3,
         initialScale: 1.4,
         targetScale: 0.95,
         baseY: crewSprite.y,

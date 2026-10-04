@@ -121,7 +121,7 @@ export const PirateButton: React.FC<PirateButtonProps> = ({
           }`}
         />
         <span
-          className={`relative z-10 px-3 max-w-[84%] text-center font-serif font-black tracking-normal uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] whitespace-nowrap overflow-hidden text-ellipsis transition-colors ${
+          className={`relative z-10 px-3 max-w-[90%] text-center flex items-center justify-center font-serif font-black tracking-normal uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] whitespace-nowrap overflow-hidden text-ellipsis transition-colors ${
             isPressed
               ? 'translate-y-0.5 text-white'
               : isHovered

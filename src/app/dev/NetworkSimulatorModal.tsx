@@ -179,10 +179,11 @@ export const NetworkSimulatorModal: React.FC<NetworkSimulatorModalProps> = ({ on
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full pt-2 border-t border-[#243f5e]">
           <PirateButton
             variant="secondary"
-            size="sm"
+            size="md"
+            className="!w-[230px] sm:!w-[250px]"
             onClick={handleResetToDefaults}
           >
-            Reset to default Features
+            RESET TO DEFAULTS
           </PirateButton>
 
           <PirateButton variant="primary" size="sm" onClick={onClose}>
