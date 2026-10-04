@@ -23,13 +23,13 @@ export class MapGenerator {
 
   // 4 Main Islands + 4 Isolated Sea Rocks in open navigation channels
   public readonly obstacles: ObstacleBox[] = [
-    // 1. Top-Left Imperial Fortress Island (Complete Castle + Ramparts + Cannons + Palms + Beach)
+    // 1. Top-Left Imperial Fortress Island (Complete Castle with Grassy Courtyard + Palms + Clean Beach)
     { x: 280, y: 130, width: 400, height: 300 },
-    // 2. Top-Right Tropical Lagoon Haven (Palm Grove + Stranded Boat + Flower Meadow)
+    // 2. Top-Right Tropical Lagoon Haven (Palm Grove + Flower Meadow + Clean Beach)
     { x: 1220, y: 130, width: 400, height: 290 },
-    // 3. Bottom-Left Skull Reef Outpost (Stone Watchtower + Pier + Defense Cannon + Coastal Rocks)
+    // 3. Bottom-Left Natural Island (Grass Meadow + Coconut Grove + Clean Beach)
     { x: 280, y: 670, width: 380, height: 280 },
-    // 4. Bottom-Right Siren's Coral Archipelago (Meadow + Twin Palms + Stranded Dinghy)
+    // 4. Bottom-Right Siren's Coral Archipelago (Grass Meadow + Palm Grove + Clean Beach)
     { x: 1200, y: 670, width: 420, height: 280 },
 
     // Sea Rocks scattered in open navigation lanes (balanced tactical obstacles)
@@ -132,15 +132,12 @@ export class MapGenerator {
     const haloGfx = new Graphics();
     for (const box of this.obstacles) {
       if (box.isRock) {
-        // Outer soft shoal
         haloGfx.circle(box.x + box.width / 2, box.y + box.height / 2, 48);
         haloGfx.fill({ color: 0x8be5f5, alpha: 0.22 });
-        // Inner shallow caustics
         haloGfx.circle(box.x + box.width / 2, box.y + box.height / 2, 36);
         haloGfx.fill({ color: 0x48cae4, alpha: 0.35 });
         continue;
       }
-      // Outer shoal halo
       const outerMargin = 48;
       haloGfx.roundRect(
         box.x - outerMargin,
@@ -151,7 +148,6 @@ export class MapGenerator {
       );
       haloGfx.fill({ color: 0x8be5f5, alpha: 0.24 });
 
-      // Inner reef caustics ring
       const innerMargin = 26;
       haloGfx.roundRect(
         box.x - innerMargin,
@@ -168,10 +164,10 @@ export class MapGenerator {
     this.waveGfx = new Graphics();
     container.addChild(this.waveGfx);
 
-    // 4. Construct Each of the 4 Islands with Authentic Seamless Tiles, Greenery & Nature
-    this.renderIsland1(container, assets, this.obstacles[0]!); // Top-Left Complete Fortress Castle
+    // 4. Construct Each of the 4 Clean Islands with Authentic Seamless Tiles, Greenery & Palms
+    this.renderIsland1(container, assets, this.obstacles[0]!); // Top-Left Fortress with Grassy Courtyard
     this.renderIsland2(container, assets, this.obstacles[1]!); // Top-Right Tropical Lagoon Haven
-    this.renderIsland3(container, assets, this.obstacles[2]!); // Bottom-Left Skull Reef Outpost
+    this.renderIsland3(container, assets, this.obstacles[2]!); // Bottom-Left Natural Island
     this.renderIsland4(container, assets, this.obstacles[3]!); // Bottom-Right Siren's Coral Archipelago
 
     // 5. Render Sea Rocks in Open Navigation Channels
@@ -204,7 +200,7 @@ export class MapGenerator {
   }
 
   /**
-   * Builds an authentic seamless 9-slice sand coast with natural dune variations on the interior.
+   * Builds an authentic seamless 9-slice sand coast with unified sand interior.
    */
   private buildSandCoast(
     container: Container,
@@ -223,7 +219,7 @@ export class MapGenerator {
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        let tileKey = 'tile_18'; // Smooth sand base
+        let tileKey = 'tile_18'; // Smooth clean sand base
 
         if (c === 0 && r === 0) tileKey = 'tile_1';
         else if (c === cols - 1 && r === 0) tileKey = 'tile_3';
@@ -235,7 +231,7 @@ export class MapGenerator {
         else if (c === cols - 1) tileKey = 'tile_19';
         else {
           const s = (c * 17 + r * 23 + seed * 13) % 9;
-          if (s === 1) tileKey = 'tile_4';  // sand dune ripple
+          if (s === 1) tileKey = 'tile_4';  // subtle sand dune ripple
           else if (s === 2) tileKey = 'tile_20'; // sandy texture
           else if (s === 3) tileKey = 'tile_21'; // sand ripples
           else tileKey = 'tile_18';
@@ -273,17 +269,15 @@ export class MapGenerator {
       for (let c = 0; c < cols; c++) {
         let tileKey = 'tile_40'; // Center grass
 
-        if (c === 0 && r === 0) tileKey = 'tile_23';
-        else if (c === cols - 1 && r === 0) tileKey = 'tile_9';
-        else if (c === 0 && r === rows - 1) tileKey = 'tile_54';
-        else if (c === cols - 1 && r === rows - 1) tileKey = 'tile_57';
-        else if (r === 0) {
-          tileKey = ((c + seed) % 3 === 0) ? 'tile_8' : 'tile_7';
+        if (r === 0) {
+          tileKey = ((c + seed) % 3 === 0) ? 'tile_8' : 'tile_7'; // Organic northern sand-to-grass wave
         } else if (r === rows - 1) {
-          tileKey = ((c + seed) % 3 === 1) ? 'tile_56' : 'tile_55';
-        } else if (c === 0) tileKey = 'tile_22';
-        else if (c === cols - 1) tileKey = 'tile_25';
-        else {
+          tileKey = ((c + seed) % 3 === 1) ? 'tile_56' : 'tile_55'; // Organic southern sand-to-grass wave
+        } else if (c === 0) {
+          tileKey = 'tile_22'; // Organic western edge
+        } else if (c === cols - 1) {
+          tileKey = 'tile_25'; // Organic eastern edge
+        } else {
           const rand = (c * 19 + r * 31 + seed * 7) % 8;
           if (rand === 1 || rand === 5) tileKey = 'tile_24'; // White daisies flower meadow!
           else if (rand === 2 || rand === 6) tileKey = 'tile_39'; // Grass tufts!
@@ -307,8 +301,7 @@ export class MapGenerator {
    * - Mounted defense cannons pointing North (tile_47), South (tile_48), East (tile_31), and West (tile_32)
    * - Stone ramparts (tile_16 horizontal, tile_15 vertical)
    * - Wooden Drawbridge / Gate entrance (tile_76)
-   * - Central Citadel Keep Tower (tile_29 with battlement roof tile_14)
-   * - Stone bridge arch (tile_96)
+   * - Courtyard interior: Pure lush green grass lawn (tile_40), per user request!
    */
   private renderCompleteCastle(container: Container, assets: AssetLoader, castleX: number, castleY: number): void {
     const t = 52;
@@ -321,18 +314,18 @@ export class MapGenerator {
       { c: 3, r: 0, key: 'tile_16' }, // Rampart
       { c: 4, r: 0, key: 'tile_78' }, // NE Tower
 
-      // Row 1 (Upper Keep & Courtyard)
+      // Row 1 (Upper Courtyard: Clean lush green grass lawn)
       { c: 0, r: 1, key: 'tile_15' }, // West Rampart
-      { c: 1, r: 1, key: 'tile_18' }, // Courtyard floor
-      { c: 2, r: 1, key: 'tile_29' }, // Central Citadel Tower Keep
-      { c: 3, r: 1, key: 'tile_18' }, // Courtyard floor
+      { c: 1, r: 1, key: 'tile_40' }, // Grass lawn
+      { c: 2, r: 1, key: 'tile_40' }, // Grass lawn
+      { c: 3, r: 1, key: 'tile_40' }, // Grass lawn
       { c: 4, r: 1, key: 'tile_15' }, // East Rampart
 
-      // Row 2 (Lower Courtyard with West & East cannons)
+      // Row 2 (Lower Courtyard with West & East cannons: Clean lush green grass lawn)
       { c: 0, r: 2, key: 'tile_32' }, // Cannon facing West!
-      { c: 1, r: 2, key: 'tile_96' }, // Stone Bridge Arch
-      { c: 2, r: 2, key: 'tile_18' }, // Courtyard floor
-      { c: 3, r: 2, key: 'tile_18' }, // Courtyard floor
+      { c: 1, r: 2, key: 'tile_40' }, // Grass lawn
+      { c: 2, r: 2, key: 'tile_40' }, // Grass lawn
+      { c: 3, r: 2, key: 'tile_40' }, // Grass lawn
       { c: 4, r: 2, key: 'tile_31' }, // Cannon facing East!
 
       // Row 3 (South Wall with Drawbridge Gate & South cannon)
@@ -351,20 +344,11 @@ export class MapGenerator {
       sprite.height = t;
       container.addChild(sprite);
     }
-
-    // Citadel Keep Roof with trapdoor/hatch over central tower (c=2, r=1)
-    const keepRoof = new Sprite(assets.getTexture('tile_14'));
-    keepRoof.anchor.set(0.5);
-    keepRoof.x = castleX + 2.5 * t;
-    keepRoof.y = castleY + 1.5 * t;
-    keepRoof.width = t * 1.05;
-    keepRoof.height = t * 1.05;
-    container.addChild(keepRoof);
   }
 
   /**
    * Island 1: Imperial Fortress Island (Top-Left)
-   * Hosts the complete stone castle surrounded by lush tropical grounds, coconut palms, and beaches.
+   * Hosts the complete stone castle with grassy courtyard interior, surrounded by tropical palms and clean beaches.
    */
   private renderIsland1(container: Container, assets: AssetLoader, box: ObstacleBox): void {
     // 1. Organic sand coastline
@@ -383,7 +367,7 @@ export class MapGenerator {
       1
     );
 
-    // 3. Complete Stone Fortress / Castle (5 cols x 4 rows = 260x208px, centered on island grounds)
+    // 3. Complete Stone Fortress / Castle with Grassy Courtyard
     this.renderCompleteCastle(container, assets, box.x + 70, box.y + 46);
 
     // 4. Lush Tropical Coconut Palms & Shrubbery
@@ -427,27 +411,11 @@ export class MapGenerator {
     sprout2.x = box.x + 350;
     sprout2.y = box.y + 140;
     container.addChild(sprout2);
-
-    // 6. Stranded Wooden Rowing Dinghy on Southern Beach (transparent sprite)
-    const dinghy = new Sprite(assets.getTexture('dinghy_large_1'));
-    dinghy.anchor.set(0.5);
-    dinghy.x = box.x + 200;
-    dinghy.y = box.y + 270;
-    dinghy.scale.set(1.1);
-    dinghy.rotation = 0.2;
-    container.addChild(dinghy);
-
-    // 7. Coastal mossy rock (transparent sprite)
-    const rock = new Sprite(assets.getTexture('tile_50'));
-    rock.anchor.set(0.5);
-    rock.x = box.x + 270;
-    rock.y = box.y + 272;
-    container.addChild(rock);
   }
 
   /**
    * Island 2: Tropical Lagoon Haven (Top-Right)
-   * Dense coconut grove, flower meadow, stranded boat, and coastal rocks.
+   * Dense coconut grove, flower meadow, and clean sandy beaches.
    */
   private renderIsland2(container: Container, assets: AssetLoader, box: ObstacleBox): void {
     // 1. Organic sand base
@@ -510,36 +478,17 @@ export class MapGenerator {
     bush2.scale.set(1.2);
     container.addChild(bush2);
 
-    // 5. Stranded Pirate Dinghy on Beach (transparent sprite)
-    const dinghy = new Sprite(assets.getTexture('dinghy_large_2'));
-    dinghy.anchor.set(0.5);
-    dinghy.x = box.x + 75;
-    dinghy.y = box.y + 245;
-    dinghy.scale.set(1.15);
-    dinghy.rotation = -0.3;
-    container.addChild(dinghy);
-
-    // 6. Loose Cannon on beach (transparent sprite)
-    const cannon = new Sprite(assets.getTexture('cannon_loose'));
-    cannon.anchor.set(0.5);
-    cannon.x = box.x + 320;
-    cannon.y = box.y + 245;
-    cannon.scale.set(1.2);
-    cannon.rotation = 0.4;
-    container.addChild(cannon);
-
-    // 7. Coastal mossy rock (transparent sprite)
-    const rock = new Sprite(assets.getTexture('tile_66'));
-    rock.anchor.set(0.5);
-    rock.x = box.x + 230;
-    rock.y = box.y + 250;
-    rock.scale.set(1.25);
-    container.addChild(rock);
+    // 5. Green Foliage Sprouts
+    const sprout = new Sprite(assets.getTexture('tile_88'));
+    sprout.anchor.set(0.5);
+    sprout.x = box.x + 240;
+    sprout.y = box.y + 240;
+    container.addChild(sprout);
   }
 
   /**
-   * Island 3: Skull Reef & Fortified Outpost (Bottom-Left)
-   * Features stone watchtower, dock pier, ancient ramparts, defense cannon, and rugged rocks.
+   * Island 3: Natural Tropical Island (Bottom-Left)
+   * Clean natural island with coconut palm grove, lush meadow, and clean sandy beaches.
    */
   private renderIsland3(container: Container, assets: AssetLoader, box: ObstacleBox): void {
     // 1. Organic sand base
@@ -558,91 +507,59 @@ export class MapGenerator {
       3
     );
 
-    // 3. Stone Outpost Watchtower & Battlement Roof (tile_29 + tile_13)
-    const towerBody = new Sprite(assets.getTexture('tile_29'));
-    towerBody.anchor.set(0.5);
-    towerBody.x = box.x + 130;
-    towerBody.y = box.y + 125;
-    towerBody.scale.set(1.2);
-    container.addChild(towerBody);
-
-    const towerRoof = new Sprite(assets.getTexture('tile_13'));
-    towerRoof.anchor.set(0.5);
-    towerRoof.x = box.x + 130;
-    towerRoof.y = box.y + 125;
-    towerRoof.scale.set(1.2);
-    container.addChild(towerRoof);
-
-    // 4. Stone Rampart Pier / Dock (tile_16 & tile_96)
-    const dock = new Sprite(assets.getTexture('tile_16'));
-    dock.anchor.set(0.5);
-    dock.x = box.x + 75;
-    dock.y = box.y + 125;
-    dock.scale.set(1.15);
-    container.addChild(dock);
-
-    // 5. Ancient Stone Wall Sections (tile_90)
-    const crackedWall = new Sprite(assets.getTexture('tile_90'));
-    crackedWall.anchor.set(0.5);
-    crackedWall.x = box.x + 185;
-    crackedWall.y = box.y + 125;
-    crackedWall.scale.set(1.1);
-    container.addChild(crackedWall);
-
-    // 6. Coastal Defense Cannon facing the South Channel (tile_48)
-    const cannon = new Sprite(assets.getTexture('tile_48'));
-    cannon.anchor.set(0.5);
-    cannon.x = box.x + 240;
-    cannon.y = box.y + 125;
-    cannon.scale.set(1.15);
-    container.addChild(cannon);
-
-    // 7. Coconut Palms & Foliage
+    // 3. Coconut Palms & Foliage Grove
     const palm1 = new Sprite(assets.getTexture('tile_71'));
     palm1.anchor.set(0.5);
-    palm1.x = box.x + 310;
-    palm1.y = box.y + 90;
+    palm1.x = box.x + 85;
+    palm1.y = box.y + 70;
     palm1.scale.set(1.35);
     container.addChild(palm1);
 
     const palm2 = new Sprite(assets.getTexture('tile_72'));
     palm2.anchor.set(0.5);
-    palm2.x = box.x + 120;
-    palm2.y = box.y + 215;
-    palm2.scale.set(1.2);
+    palm2.x = box.x + 220;
+    palm2.y = box.y + 80;
+    palm2.scale.set(1.25);
     container.addChild(palm2);
 
-    const bush = new Sprite(assets.getTexture('tile_70'));
-    bush.anchor.set(0.5);
-    bush.x = box.x + 295;
-    bush.y = box.y + 215;
-    bush.scale.set(1.2);
-    container.addChild(bush);
+    const palm3 = new Sprite(assets.getTexture('tile_71'));
+    palm3.anchor.set(0.5);
+    palm3.x = box.x + 300;
+    palm3.y = box.y + 150;
+    palm3.scale.set(1.3);
+    container.addChild(palm3);
+
+    const palm4 = new Sprite(assets.getTexture('tile_72'));
+    palm4.anchor.set(0.5);
+    palm4.x = box.x + 140;
+    palm4.y = box.y + 190;
+    palm4.scale.set(1.2);
+    container.addChild(palm4);
+
+    const bush1 = new Sprite(assets.getTexture('tile_70'));
+    bush1.anchor.set(0.5);
+    bush1.x = box.x + 80;
+    bush1.y = box.y + 150;
+    bush1.scale.set(1.2);
+    container.addChild(bush1);
+
+    const bush2 = new Sprite(assets.getTexture('tile_70'));
+    bush2.anchor.set(0.5);
+    bush2.x = box.x + 230;
+    bush2.y = box.y + 215;
+    bush2.scale.set(1.2);
+    container.addChild(bush2);
 
     const sprout = new Sprite(assets.getTexture('tile_88'));
     sprout.anchor.set(0.5);
     sprout.x = box.x + 205;
-    sprout.y = box.y + 215;
+    sprout.y = box.y + 150;
     container.addChild(sprout);
-
-    // 8. Rugged Coastal Sea Rocks (transparent sprites)
-    const boulder = new Sprite(assets.getTexture('tile_67'));
-    boulder.anchor.set(0.5);
-    boulder.x = box.x + 65;
-    boulder.y = box.y + 225;
-    boulder.scale.set(1.25);
-    container.addChild(boulder);
-
-    const beachRock = new Sprite(assets.getTexture('tile_50'));
-    beachRock.anchor.set(0.5);
-    beachRock.x = box.x + 220;
-    beachRock.y = box.y + 240;
-    container.addChild(beachRock);
   }
 
   /**
    * Island 4: Siren's Coral Archipelago (Bottom-Right)
-   * Flower meadows, twin palms, stranded boat, and coastal rocks.
+   * Flower meadows, palm grove, and clean sandy beaches.
    */
   private renderIsland4(container: Container, assets: AssetLoader, box: ObstacleBox): void {
     // 1. Organic sand base
@@ -662,24 +579,24 @@ export class MapGenerator {
     );
 
     // 3. Coconut Palm Canopy Cluster
-    const palmLeft = new Sprite(assets.getTexture('tile_71'));
-    palmLeft.anchor.set(0.5);
-    palmLeft.x = box.x + 140;
-    palmLeft.y = box.y + 100;
-    palmLeft.scale.set(1.35);
-    container.addChild(palmLeft);
+    const palmNW = new Sprite(assets.getTexture('tile_71'));
+    palmNW.anchor.set(0.5);
+    palmNW.x = box.x + 85;
+    palmNW.y = box.y + 65;
+    palmNW.scale.set(1.35);
+    container.addChild(palmNW);
 
-    const palmCenter = new Sprite(assets.getTexture('tile_72'));
-    palmCenter.anchor.set(0.5);
-    palmCenter.x = box.x + 220;
-    palmCenter.y = box.y + 175;
-    palmCenter.scale.set(1.2);
-    container.addChild(palmCenter);
+    const palmMid = new Sprite(assets.getTexture('tile_72'));
+    palmMid.anchor.set(0.5);
+    palmMid.x = box.x + 190;
+    palmMid.y = box.y + 110;
+    palmMid.scale.set(1.2);
+    container.addChild(palmMid);
 
     const palmRight = new Sprite(assets.getTexture('tile_71'));
     palmRight.anchor.set(0.5);
-    palmRight.x = box.x + 290;
-    palmRight.y = box.y + 100;
+    palmRight.x = box.x + 300;
+    palmRight.y = box.y + 90;
     palmRight.scale.set(1.3);
     container.addChild(palmRight);
 
@@ -691,35 +608,19 @@ export class MapGenerator {
     bush1.scale.set(1.2);
     container.addChild(bush1);
 
+    const bush2 = new Sprite(assets.getTexture('tile_70'));
+    bush2.anchor.set(0.5);
+    bush2.x = box.x + 95;
+    bush2.y = box.y + 170;
+    bush2.scale.set(1.15);
+    container.addChild(bush2);
+
     // 5. Green Sprouts
     const sprout = new Sprite(assets.getTexture('tile_87'));
     sprout.anchor.set(0.5);
     sprout.x = box.x + 160;
     sprout.y = box.y + 205;
     container.addChild(sprout);
-
-    // 6. Stranded Wooden Rowing Boat on Eastern Sand Beach (transparent sprite)
-    const dinghy = new Sprite(assets.getTexture('dinghy_large_1'));
-    dinghy.anchor.set(0.5);
-    dinghy.x = box.x + 360;
-    dinghy.y = box.y + 225;
-    dinghy.scale.set(1.15);
-    dinghy.rotation = 0.2;
-    container.addChild(dinghy);
-
-    // 7. Coastal mossy rocks (transparent sprites)
-    const rock1 = new Sprite(assets.getTexture('tile_66'));
-    rock1.anchor.set(0.5);
-    rock1.x = box.x + 80;
-    rock1.y = box.y + 225;
-    rock1.scale.set(1.2);
-    container.addChild(rock1);
-
-    const rock2 = new Sprite(assets.getTexture('tile_50'));
-    rock2.anchor.set(0.5);
-    rock2.x = box.x + 260;
-    rock2.y = box.y + 235;
-    container.addChild(rock2);
   }
 
   /**
