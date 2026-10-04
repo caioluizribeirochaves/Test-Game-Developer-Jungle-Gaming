@@ -19,11 +19,11 @@ export const PiratePanel: React.FC<PiratePanelProps> = ({
         style={{
           borderImageSource: "url('/assets/png/retina/ui/menu/panel_menu.png')",
           borderImageSlice: '80 64 80 64 fill',
-          borderImageWidth: '32px 28px 32px 28px',
+          borderImageWidth: '24px 20px 24px 20px',
           borderImageRepeat: 'stretch',
         }}
       >
-        <div className="relative z-10 w-full h-full px-4 xs:px-6 sm:px-8 py-3 xs:py-4 sm:py-6 flex flex-col items-center justify-between">
+        <div className="relative z-10 w-full h-full px-3 xs:px-5 sm:px-7 py-2.5 xs:py-3.5 sm:py-5 flex flex-col items-center justify-between">
           {children}
         </div>
       </div>
@@ -31,22 +31,22 @@ export const PiratePanel: React.FC<PiratePanelProps> = ({
   }
 
   // General 9-slice / framed modal dialog for options, logs, etc.
-  let maxWidth = 'max-w-[480px]';
-  if (size === 'sm') maxWidth = 'max-w-[380px]';
-  if (size === 'lg') maxWidth = 'max-w-[580px]';
-  if (size === 'wide') maxWidth = 'max-w-[760px]';
+  let maxWidth = 'max-w-[460px]';
+  if (size === 'sm') maxWidth = 'max-w-[360px]';
+  if (size === 'lg') maxWidth = 'max-w-[560px]';
+  if (size === 'wide') maxWidth = 'max-w-[740px]';
 
   return (
     <div
-      className={`relative z-10 p-2 sm:p-3 w-[92vw] ${maxWidth} select-none filter drop-shadow-[0_16px_36px_rgba(0,0,0,0.85)] ${className}`}
+      className={`relative z-10 p-1 sm:p-2 w-[94vw] ${maxWidth} select-none filter drop-shadow-[0_16px_36px_rgba(0,0,0,0.85)] ${className}`}
       style={{
         borderImageSource: "url('/assets/png/retina/ui/menu/panel_menu.png')",
         borderImageSlice: '80 64 80 64 fill',
-        borderImageWidth: '32px 28px 32px 28px',
+        borderImageWidth: '22px 18px 22px 18px',
         borderImageRepeat: 'stretch',
       }}
     >
-      <div className="relative w-full h-full p-4 sm:p-6 flex flex-col items-center">
+      <div className="relative w-full h-full p-2.5 xs:p-3 sm:p-5 flex flex-col items-center">
         {children}
       </div>
     </div>

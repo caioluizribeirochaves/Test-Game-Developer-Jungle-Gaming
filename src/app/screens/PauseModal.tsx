@@ -20,43 +20,59 @@ export const PauseModal: React.FC<PauseModalProps> = ({
   const [showControlsInline, setShowControlsInline] = React.useState(false);
 
   return (
-    <div className="absolute inset-0 z-40 bg-black/55 backdrop-blur-[2.5px] flex items-center justify-center p-4">
-      <PiratePanel size="sm">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-[#fce79f] tracking-wider mb-1 drop-shadow-md">
+    <div className="absolute inset-0 z-40 bg-black/55 backdrop-blur-[2.5px] flex items-center justify-center p-2 sm:p-4 select-none">
+      <PiratePanel size="sm" className="max-h-[calc(100dvh-20px)]">
+        <h2 className="text-lg xs:text-xl sm:text-2xl font-extrabold text-[#fce79f] tracking-wider mb-0.5 drop-shadow-md">
           PAUSED
         </h2>
-        <p className="text-xs text-[#c5ad83] mb-5 font-medium">
+        <p className="text-[10px] xs:text-xs text-[#c5ad83] mb-2 sm:mb-3 font-medium">
           {isBlurTriggered ? 'Paused because the game lost focus.' : 'Ready when you are.'}
         </p>
 
         {!showControlsInline ? (
           <div className="flex flex-col items-center w-full">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 w-full items-center justify-items-center mb-2">
-              <PirateButton variant="primary" size="sm" onClick={onResume}>
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-2.5 w-full items-center justify-items-center mb-1 sm:mb-2">
+              <PirateButton
+                variant="primary"
+                size="xs"
+                onClick={onResume}
+                className="w-[125px] xs:w-[145px] h-[34px] xs:h-[38px] text-[10px] xs:text-[11px]"
+              >
                 RESUME
               </PirateButton>
 
-              <PirateButton variant="primary" size="sm" onClick={onOptions}>
+              <PirateButton
+                variant="primary"
+                size="xs"
+                onClick={onOptions}
+                className="w-[125px] xs:w-[145px] h-[34px] xs:h-[38px] text-[10px] xs:text-[11px]"
+              >
                 OPTIONS
               </PirateButton>
 
               <PirateButton
                 variant="primary"
-                size="sm"
+                size="xs"
                 onClick={() => {
                   if (onControls) onControls();
                   else setShowControlsInline(true);
                 }}
+                className="w-[125px] xs:w-[145px] h-[34px] xs:h-[38px] text-[10px] xs:text-[11px]"
               >
                 CONTROLS
               </PirateButton>
 
-              <PirateButton variant="primary" size="sm" onClick={onMainMenu}>
+              <PirateButton
+                variant="primary"
+                size="xs"
+                onClick={onMainMenu}
+                className="w-[125px] xs:w-[145px] h-[34px] xs:h-[38px] text-[10px] xs:text-[11px]"
+              >
                 MAIN MENU
               </PirateButton>
             </div>
 
-            <p className="text-[10px] text-stone-400 mt-1 text-center">
+            <p className="text-[8.5px] xs:text-[9.5px] text-stone-400 mt-1 text-center">
               Leaving ends this battle without recording it.
             </p>
           </div>

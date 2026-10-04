@@ -97,20 +97,20 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
         </>
       )}
 
-      <PiratePanel size="md" className="z-10 max-h-[92dvh] overflow-y-auto custom-scrollbar p-1.5 sm:p-4">
-        <h2 className="text-xl sm:text-3xl font-extrabold text-[#fce79f] tracking-wider mb-3 sm:mb-5 drop-shadow-md">
+      <PiratePanel size="md" className="z-10 max-h-[calc(100dvh-20px)] overflow-y-auto custom-scrollbar p-1.5 sm:p-4">
+        <h2 className="text-lg xs:text-xl sm:text-2xl font-extrabold text-[#fce79f] tracking-wider mb-2 sm:mb-4 drop-shadow-md">
           OPTIONS
         </h2>
 
         {/* 1. Setting: Game session time */}
-        <div className="w-full flex flex-col items-center mb-4">
-          <label className="text-xs sm:text-sm font-bold text-[#f7edd2] uppercase tracking-wider mb-2">
+        <div className="w-full flex flex-col items-center mb-2.5 sm:mb-3.5">
+          <label className="text-[11px] sm:text-xs font-bold text-[#f7edd2] uppercase tracking-wider mb-1">
             Game session time
           </label>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <PirateButton
               variant="round"
-              size="md"
+              size="sm"
               icon="minus"
               onClick={() => handleDurationChange(-MATCH_CONFIG_LIMITS.durationStep)}
               disabled={sessionDuration <= MATCH_CONFIG_LIMITS.minDuration}
@@ -119,13 +119,13 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
               −
             </PirateButton>
 
-            <div className="w-28 text-center text-lg sm:text-xl font-black text-[#fce79f] bg-black/50 py-1.5 rounded-xl border border-[#9b6f1e] shadow-inner font-mono">
+            <div className="w-24 text-center text-base sm:text-lg font-black text-[#fce79f] bg-black/50 py-1 rounded-xl border border-[#9b6f1e] shadow-inner font-mono">
               {sessionDuration} s
             </div>
 
             <PirateButton
               variant="round"
-              size="md"
+              size="sm"
               icon="plus"
               onClick={() => handleDurationChange(MATCH_CONFIG_LIMITS.durationStep)}
               disabled={sessionDuration >= MATCH_CONFIG_LIMITS.maxDuration}
@@ -134,20 +134,20 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
               +
             </PirateButton>
           </div>
-          <span className="text-[11px] text-stone-400 mt-1">
+          <span className="text-[10px] text-stone-400 mt-0.5">
             60-180 seconds of active play.
           </span>
         </div>
 
         {/* 2. Setting: Enemy spawn time */}
-        <div className="w-full flex flex-col items-center mb-4">
-          <label className="text-xs sm:text-sm font-bold text-[#f7edd2] uppercase tracking-wider mb-2">
+        <div className="w-full flex flex-col items-center mb-2.5 sm:mb-3.5">
+          <label className="text-[11px] sm:text-xs font-bold text-[#f7edd2] uppercase tracking-wider mb-1">
             Enemy spawn time
           </label>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <PirateButton
               variant="round"
-              size="md"
+              size="sm"
               icon="minus"
               onClick={() => handleSpawnChange(-0.5)}
               disabled={enemySpawnInterval <= MATCH_CONFIG_LIMITS.minSpawnInterval}
@@ -156,13 +156,13 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
               −
             </PirateButton>
 
-            <div className="w-28 text-center text-lg sm:text-xl font-black text-[#fce79f] bg-black/50 py-1.5 rounded-xl border border-[#9b6f1e] shadow-inner font-mono">
+            <div className="w-24 text-center text-base sm:text-lg font-black text-[#fce79f] bg-black/50 py-1 rounded-xl border border-[#9b6f1e] shadow-inner font-mono">
               {enemySpawnInterval} s
             </div>
 
             <PirateButton
               variant="round"
-              size="md"
+              size="sm"
               icon="plus"
               onClick={() => handleSpawnChange(0.5)}
               disabled={enemySpawnInterval >= MATCH_CONFIG_LIMITS.maxSpawnInterval}
@@ -171,67 +171,82 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
               +
             </PirateButton>
           </div>
-          <span className="text-[11px] text-stone-400 mt-1">
+          <span className="text-[10px] text-stone-400 mt-0.5">
             1-10 seconds between enemy ships, in 0.5 s steps.
           </span>
         </div>
 
         {/* 3. Setting: Captain name */}
-        <div className="w-full flex flex-col items-center mb-3">
-          <label className="text-xs sm:text-sm font-bold text-[#f7edd2] uppercase tracking-wider mb-2">
+        <div className="w-full flex flex-col items-center mb-2 sm:mb-3">
+          <label className="text-[11px] sm:text-xs font-bold text-[#f7edd2] uppercase tracking-wider mb-1">
             Captain name
           </label>
           <input
             type="text"
             value={captainName}
             onChange={(e) => setCaptainName(e.target.value)}
-            className="w-full max-w-[260px] bg-[#0c1825] border-2 border-[#385675] focus:border-[#dfa837] rounded-xl px-4 py-2 text-center text-sm font-bold text-amber-200 shadow-inner outline-none transition-colors"
+            className="w-full max-w-[240px] bg-[#0c1825] border-2 border-[#385675] focus:border-[#dfa837] rounded-xl px-3 py-1 text-center text-xs sm:text-sm font-bold text-amber-200 shadow-inner outline-none transition-colors"
             placeholder="Captain Jack"
             maxLength={20}
           />
         </div>
 
         {/* 4. Setting: Sound effects checkbox */}
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-1.5">
           <input
             type="checkbox"
             id="sound-effects-toggle"
             checked={soundEnabled}
             onChange={handleToggleSound}
-            className="w-4 h-4 rounded border-stone-500 text-amber-500 focus:ring-amber-400 cursor-pointer accent-amber-500"
+            className="w-3.5 h-3.5 rounded border-stone-500 text-amber-500 focus:ring-amber-400 cursor-pointer accent-amber-500"
           />
           <label
             htmlFor="sound-effects-toggle"
-            className="text-xs sm:text-sm font-bold text-[#f7edd2] cursor-pointer"
+            className="text-[11px] sm:text-xs font-bold text-[#f7edd2] cursor-pointer"
           >
             Sound effects
           </label>
         </div>
 
-        <p className="text-[10px] text-stone-400 mb-4 text-center">
+        <p className="text-[9.5px] text-stone-400 mb-2 sm:mb-3 text-center">
           Changes apply to your next battle.
         </p>
 
         {/* Feedback message when saved */}
         {savedFeedback && (
-          <div className="text-xs text-emerald-400 font-bold mb-3 animate-bounce text-center">
+          <div className="text-[11px] sm:text-xs text-emerald-400 font-bold mb-2 animate-bounce text-center">
             Options saved. They will be applied on your next battle
           </div>
         )}
 
         {/* Row of Action Buttons: SAVE and DEFAULTS */}
-        <div className="flex items-center gap-3 mb-3 w-full justify-center">
-          <PirateButton variant="primary" size="sm" onClick={handleSave}>
+        <div className="flex items-center gap-2.5 mb-2 sm:mb-2.5 w-full justify-center">
+          <PirateButton
+            variant="primary"
+            size="xs"
+            onClick={handleSave}
+            className="w-[110px] xs:w-[130px] h-[32px] xs:h-[36px] text-[10px] xs:text-[11px]"
+          >
             SAVE
           </PirateButton>
 
-          <PirateButton variant="secondary" size="sm" onClick={handleRestoreDefaults}>
+          <PirateButton
+            variant="secondary"
+            size="xs"
+            onClick={handleRestoreDefaults}
+            className="w-[110px] xs:w-[130px] h-[32px] xs:h-[36px] text-[9px] xs:text-[10px]"
+          >
             DEFAULTS
           </PirateButton>
         </div>
 
         {/* Bottom Navigation Button */}
-        <PirateButton variant="primary" size="md" onClick={onClose}>
+        <PirateButton
+          variant="primary"
+          size="sm"
+          onClick={onClose}
+          className="w-[160px] xs:w-[185px] h-[36px] xs:h-[42px] text-xs sm:text-sm"
+        >
           {isInGame ? 'BACK' : 'MAIN MENU'}
         </PirateButton>
       </PiratePanel>

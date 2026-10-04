@@ -78,9 +78,17 @@ test.describe('Visual Regression Tests', () => {
     await page.getByRole('button', { name: 'PLAY' }).click();
     await page.waitForTimeout(2000);
     await page.screenshot({ path: `${artifactDir}/mobile-landscape-proportional.png` });
+
+    // Open PauseModal in mobile landscape and capture screenshot
+    await page.getByRole('button', { name: 'Pause Game' }).click();
+    await expect(page.getByRole('heading', { name: 'PAUSED' })).toBeVisible();
+    await page.screenshot({ path: `${artifactDir}/mobile-landscape-pause-modal.png` });
+
+    // Resume
+    await page.getByRole('button', { name: 'RESUME' }).click();
   });
 
-  test('should render perfectly framed mobile portrait view', async ({ page }) => {
+  test('should render perfectly framed mobile portrait view and handle rotation', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/?mobile=true');
     await expect(page.getByRole('button', { name: 'PLAY' })).toBeVisible({ timeout: 15000 });
@@ -90,6 +98,13 @@ test.describe('Visual Regression Tests', () => {
     await page.getByRole('button', { name: 'PLAY' }).click();
     await page.waitForTimeout(2000);
     await page.screenshot({ path: `${artifactDir}/mobile-portrait-proportional.png` });
+
+    // Rotate dynamically to landscape then back to portrait to verify no assets/water get lost
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.waitForTimeout(800);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(1000);
+    await page.screenshot({ path: `${artifactDir}/mobile-portrait-after-rotation.png` });
   });
 });
 

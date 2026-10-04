@@ -67,9 +67,11 @@ export class GameEngine {
   public currentFps: number = 60;
   public frameTimes: number[] = [];
 
+  private canvasContainer: HTMLElement | null = null;
   private onVisibilityChangeBound: () => void;
   private onWindowBlurBound: () => void;
   private onResizeBound: () => void;
+  private onOrientationChangeBound: () => void;
 
   constructor(config: MatchConfig, events: GameEngineEvents) {
     this.config = { ...config };
@@ -81,9 +83,12 @@ export class GameEngine {
     this.onVisibilityChangeBound = this.handleVisibilityChange.bind(this);
     this.onWindowBlurBound = this.handleWindowBlur.bind(this);
     this.onResizeBound = this.handleResize.bind(this);
+    this.onOrientationChangeBound = this.handleOrientationChange.bind(this);
   }
 
   public async initialize(canvasContainer: HTMLElement): Promise<void> {
+    this.canvasContainer = canvasContainer;
+
     // 1. Create PixiJS Application
     this.app = new Application();
     await this.app.init({
@@ -147,6 +152,10 @@ export class GameEngine {
     document.addEventListener('visibilitychange', this.onVisibilityChangeBound);
     window.addEventListener('blur', this.onWindowBlurBound);
     window.addEventListener('resize', this.onResizeBound);
+    window.addEventListener('orientationchange', this.onOrientationChangeBound);
+    if (window.screen?.orientation) {
+      window.screen.orientation.addEventListener('change', this.onOrientationChangeBound);
+    }
 
     this.handleResize();
 
@@ -182,8 +191,24 @@ export class GameEngine {
     this.audio.startAmbience();
   }
 
+  private handleOrientationChange(): void {
+    this.handleResize();
+    requestAnimationFrame(() => this.handleResize());
+    setTimeout(() => this.handleResize(), 100);
+    setTimeout(() => this.handleResize(), 300);
+  }
+
   private handleResize(): void {
     if (!this.app || !this.rootContainer) return;
+
+    // 1. Get true container client dimensions
+    const containerW = this.canvasContainer?.clientWidth || window.innerWidth;
+    const containerH = this.canvasContainer?.clientHeight || window.innerHeight;
+    if (containerW === 0 || containerH === 0) return;
+
+    // 2. Resize PixiJS canvas buffer to strictly match container
+    this.app.renderer.resize(containerW, containerH);
+
     const screenW = this.app.screen.width;
     const screenH = this.app.screen.height;
 
@@ -206,14 +231,12 @@ export class GameEngine {
       arenaX = (screenW - this.map.width * scale) / 2;
       arenaY = topHudSafeInset + (availableH - this.map.height * scale) / 2;
     } else if (isMobilePortrait) {
-      // In mobile portrait, default width scale (0.19-0.20) makes the arena too tiny.
-      // We scale proportionally larger while fitting comfortably between top HUD and bottom controls
+      // In mobile portrait, the arena width should strictly fit within the screen width
+      // so all 4 islands and navigation lanes are 100% visible and horizontally centered!
       const topSafeInset = 54;
       const bottomSafeInset = 140;
-      const availableH = Math.max(260, screenH - topSafeInset - bottomSafeInset);
-      // Give a ~22% boost to visibility on vertical screens, clamped to vertical clearance
-      const baseScale = screenW / this.map.width;
-      scale = Math.min(baseScale * 1.22, availableH / this.map.height);
+      const availableH = Math.max(220, screenH - topSafeInset - bottomSafeInset);
+      scale = Math.min(screenW / this.map.width, availableH / this.map.height);
 
       arenaX = (screenW - this.map.width * scale) / 2;
       arenaY = topSafeInset + (availableH - this.map.height * scale) / 2;
@@ -664,6 +687,10 @@ export class GameEngine {
     document.removeEventListener('visibilitychange', this.onVisibilityChangeBound);
     window.removeEventListener('blur', this.onWindowBlurBound);
     window.removeEventListener('resize', this.onResizeBound);
+    window.removeEventListener('orientationchange', this.onOrientationChangeBound);
+    if (window.screen?.orientation) {
+      window.screen.orientation.removeEventListener('change', this.onOrientationChangeBound);
+    }
 
     // Clean entities
     if (this.player) {
