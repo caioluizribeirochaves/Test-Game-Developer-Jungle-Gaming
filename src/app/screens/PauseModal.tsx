@@ -20,7 +20,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({
   const [showControlsInline, setShowControlsInline] = React.useState(false);
 
   return (
-    <div className="absolute inset-0 z-40 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="absolute inset-0 z-40 bg-black/55 backdrop-blur-[2.5px] flex items-center justify-center p-4">
       <PiratePanel size="sm">
         <h2 className="text-2xl sm:text-3xl font-extrabold text-[#fce79f] tracking-wider mb-1 drop-shadow-md">
           PAUSED

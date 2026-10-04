@@ -242,6 +242,11 @@ export class ShooterEnemy {
             if (!mapBlockedCheck(slideX, slideY, this.radius)) {
               this.x = slideX;
               this.y = slideY;
+              const slideAngle = Math.atan2(ty, tx);
+              let diff = slideAngle - this.angle;
+              while (diff > Math.PI) diff -= Math.PI * 2;
+              while (diff < -Math.PI) diff += Math.PI * 2;
+              this.angle += Math.max(-maxTurn * 1.5, Math.min(maxTurn * 1.5, diff));
             } else {
               this.x += nx * 40 * dt;
               this.y += ny * 40 * dt;

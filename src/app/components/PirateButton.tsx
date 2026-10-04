@@ -61,18 +61,24 @@ export const PirateButton: React.FC<PirateButtonProps> = ({
         onMouseDown={() => setIsPressed(true)}
         onMouseUp={() => setIsPressed(false)}
         disabled={disabled}
-        className={`relative flex items-center justify-center select-none cursor-pointer transition-transform active:scale-95 disabled:opacity-50 disabled:pointer-events-none filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.6)] ${sizeClasses} ${className}`}
+        className={`relative flex items-center justify-center select-none cursor-pointer transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:pointer-events-none ${
+          isHovered
+            ? 'scale-[1.04] filter drop-shadow-[0_4px_14px_rgba(223,168,55,0.45)] brightness-105'
+            : 'filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.6)]'
+        } ${sizeClasses} ${className}`}
         {...props}
       >
         <img
           src={frame}
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+          className={`absolute inset-0 w-full h-full object-fill pointer-events-none transition-all ${
+            isHovered ? 'brightness-110' : ''
+          }`}
         />
         <span
-          className={`relative z-10 px-4 max-w-[88%] text-center font-serif font-black tracking-widest text-[#3d240c] uppercase drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)] whitespace-nowrap overflow-hidden text-ellipsis ${
-            isPressed ? 'translate-y-0.5' : ''
+          className={`relative z-10 px-4 max-w-[88%] text-center font-serif font-black tracking-widest text-[#3d240c] uppercase drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)] whitespace-nowrap overflow-hidden text-ellipsis transition-colors ${
+            isPressed ? 'translate-y-0.5' : isHovered ? 'text-[#2b1704]' : ''
           }`}
         >
           {children}
@@ -163,10 +169,12 @@ export const PirateButton: React.FC<PirateButtonProps> = ({
         onMouseDown={() => setIsPressed(true)}
         onMouseUp={() => setIsPressed(false)}
         disabled={disabled}
-        className={`relative flex items-center justify-center select-none transition-transform filter drop-shadow-[0_3px_6px_rgba(0,0,0,0.6)] ${
+        className={`relative flex items-center justify-center select-none transition-all duration-150 ${
           disabled
-            ? 'opacity-40 grayscale contrast-75 cursor-not-allowed pointer-events-none'
-            : 'active:scale-92 cursor-pointer'
+            ? 'opacity-40 grayscale contrast-75 cursor-not-allowed pointer-events-none filter drop-shadow-[0_3px_6px_rgba(0,0,0,0.6)]'
+            : isHovered
+            ? 'scale-[1.08] filter drop-shadow-[0_4px_14px_rgba(223,168,55,0.55)] brightness-110 active:scale-92 cursor-pointer'
+            : 'filter drop-shadow-[0_3px_6px_rgba(0,0,0,0.6)] active:scale-92 cursor-pointer'
         } ${sizeClasses} ${className}`}
         {...props}
       >
@@ -199,11 +207,11 @@ export const PirateButton: React.FC<PirateButtonProps> = ({
   }
 
   // Tab Styles for Navigation
-  let tabStyle = 'relative select-none font-bold uppercase transition-transform active:scale-95 px-6 py-2 rounded-lg cursor-pointer ';
+  let tabStyle = 'relative select-none font-bold uppercase transition-all duration-150 active:scale-95 px-6 py-2 rounded-lg cursor-pointer ';
   if (variant === 'tabActive') {
-    tabStyle += 'bg-gradient-to-b from-[#e6b756] to-[#a37119] text-[#331c04] border-2 border-[#573108] text-sm shadow-md ';
+    tabStyle += 'bg-gradient-to-b from-[#e6b756] to-[#a37119] text-[#331c04] border-2 border-[#573108] text-sm shadow-md hover:scale-[1.04] hover:drop-shadow-[0_4px_12px_rgba(223,168,55,0.45)] ';
   } else {
-    tabStyle += 'bg-[#18283b] text-[#c5ad83] border-2 border-[#473017] text-sm hover:text-[#f7edd2] hover:border-[#875c24] ';
+    tabStyle += 'bg-[#18283b] text-[#c5ad83] border-2 border-[#473017] text-sm hover:text-[#f7edd2] hover:border-[#875c24] hover:scale-[1.04] hover:drop-shadow-[0_4px_12px_rgba(223,168,55,0.35)] ';
   }
 
   return (

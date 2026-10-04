@@ -109,7 +109,7 @@ export class NavGrid {
     y1: number,
     x2: number,
     y2: number,
-    margin: number = 8
+    margin: number = 22
   ): boolean {
     const minSegX = Math.min(x1, x2);
     const maxSegX = Math.max(x1, x2);
@@ -187,10 +187,11 @@ export class NavGrid {
     startX: number,
     startY: number,
     targetX: number,
-    targetY: number
+    targetY: number,
+    shipRadius: number = 22
   ): { x: number; y: number } {
     // 1. Direct line-of-sight: no obstacles between ship and target
-    if (this.hasLineOfSight(startX, startY, targetX, targetY)) {
+    if (this.hasLineOfSight(startX, startY, targetX, targetY, shipRadius)) {
       return { x: targetX, y: targetY };
     }
 
@@ -339,7 +340,7 @@ export class NavGrid {
     // Find the furthest reachable waypoint in path that has clear line-of-sight from startX, startY
     for (let i = path.length - 1; i >= 1; i--) {
       const wp = path[i]!;
-      if (this.hasLineOfSight(startX, startY, wp.x, wp.y, 8)) {
+      if (this.hasLineOfSight(startX, startY, wp.x, wp.y, shipRadius)) {
         return wp;
       }
     }

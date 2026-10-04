@@ -82,7 +82,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
     <div
       className={
         isInGame
-          ? 'absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center overflow-x-hidden overflow-y-auto p-4 sm:p-6'
+          ? 'absolute inset-0 z-50 bg-black/55 backdrop-blur-[2.5px] flex flex-col items-center justify-center overflow-x-hidden overflow-y-auto p-4 sm:p-6'
           : 'relative w-full h-full flex flex-col items-center justify-center overflow-x-hidden overflow-y-auto p-4 sm:p-6 select-none'
       }
     >

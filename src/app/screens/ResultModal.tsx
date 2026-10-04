@@ -25,11 +25,16 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   const reasonLabel = record.reason === 'TIME_UP' ? 'TIME UP' : 'DEFEATED';
 
   return (
-    <div
-      className="relative w-full h-full flex flex-col items-center justify-center bg-cover bg-center overflow-hidden"
-      style={{ backgroundImage: 'url(/assets/ui_scene_background.png)' }}
-    >
-      <PiratePanel size="md">
+    <div className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden select-none">
+      {/* Blurred background scene image with scale to prevent white edges */}
+      <div
+        className="absolute inset-0 bg-cover bg-center filter blur-[2.5px] scale-105 pointer-events-none"
+        style={{ backgroundImage: 'url(/assets/ui_scene_background.png)' }}
+      />
+      {/* Slight dark overlay for contrast */}
+      <div className="absolute inset-0 bg-black/35 pointer-events-none" />
+
+      <PiratePanel size="md" className="z-10">
         <h2 className="text-2xl sm:text-3xl font-extrabold text-[#fce79f] tracking-wider mb-2 drop-shadow-md">
           BATTLE COMPLETE
         </h2>
