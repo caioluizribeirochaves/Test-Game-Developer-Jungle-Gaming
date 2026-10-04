@@ -192,11 +192,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           </div>
 
           {/* Bottom Secondary Buttons: RANKING & MATCH HISTORY */}
-          <div className="flex items-center justify-center gap-2 xs:gap-3 sm:gap-4 w-full pb-1 sm:pb-2">
+          <div className="flex items-center justify-center gap-2.5 xs:gap-3 sm:gap-4 w-full pb-1 sm:pb-2">
             <PirateButton
               variant="secondary"
               size={isMobilePortrait ? 'sm' : 'md'}
               onClick={() => onOpenLog('ranking')}
+              className="w-[135px] sm:w-[155px] h-[36px] sm:h-[44px] text-[9px] sm:text-xs"
             >
               RANKING
             </PirateButton>
@@ -205,6 +206,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               variant="secondary"
               size={isMobilePortrait ? 'sm' : 'md'}
               onClick={() => onOpenLog('history')}
+              className="w-[135px] sm:w-[155px] h-[36px] sm:h-[44px] text-[9px] sm:text-xs"
             >
               MATCH HISTORY
             </PirateButton>

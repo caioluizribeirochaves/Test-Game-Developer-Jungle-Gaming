@@ -165,9 +165,28 @@ test.describe('Visual Regression Tests', () => {
     await page.getByRole('button', { name: /Network lab/i }).click();
     await expect(page.getByRole('heading', { name: /Network & MSW Chaos/i })).toBeVisible();
     await page.waitForTimeout(500);
-    await page.screenshot({ path: `${artifactDir}/mobile-portrait-network-lab.png` });
     await page.getByRole('button', { name: 'CLOSE', exact: true }).click();
     await expect(page.getByRole('heading', { name: /Network & MSW Chaos/i })).not.toBeVisible();
+  });
+
+  test('should render perfectly framed desktop pause modal', async ({ page, isMobile }) => {
+    if (isMobile) return;
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto('/');
+    await expect(page.getByRole('button', { name: 'PLAY' })).toBeVisible({ timeout: 15000 });
+    await page.getByRole('button', { name: 'PLAY' }).click();
+    await page.waitForTimeout(2000);
+
+    // Open PauseModal in desktop
+    await page.getByRole('button', { name: 'Pause Game' }).click();
+    await expect(page.getByRole('heading', { name: 'PAUSED' })).toBeVisible();
+    const artifactDir = 'C:/Users/caieb/.gemini/antigravity/brain/9807d908-8a64-4337-90a8-9e22612ebd0a';
+    await page.screenshot({ path: `${artifactDir}/desktop-pause-modal.png` });
+
+    // Open Controls inside PauseModal
+    await page.getByRole('button', { name: 'CONTROLS' }).click();
+    await expect(page.getByRole('heading', { name: 'CONTROLS' })).toBeVisible();
+    await page.screenshot({ path: `${artifactDir}/desktop-pause-controls.png` });
   });
 });
 

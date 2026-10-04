@@ -224,12 +224,12 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
           )}
 
           {/* Row of Action Buttons: SAVE and DEFAULTS */}
-          <div className="flex items-center gap-3 mb-3 w-full justify-center">
-            <PirateButton variant="primary" size="sm" onClick={handleSave}>
+          <div className="flex items-center gap-5 sm:gap-6 mb-4 w-full justify-center">
+            <PirateButton variant="primary" size="sm" onClick={handleSave} className="w-[145px] sm:w-[160px] h-[42px] sm:h-[48px] text-xs sm:text-sm">
               SAVE
             </PirateButton>
 
-            <PirateButton variant="secondary" size="sm" onClick={handleRestoreDefaults}>
+            <PirateButton variant="secondary" size="sm" onClick={handleRestoreDefaults} className="w-[145px] sm:w-[160px] h-[42px] sm:h-[48px] text-xs sm:text-sm">
               DEFAULTS
             </PirateButton>
           </div>
