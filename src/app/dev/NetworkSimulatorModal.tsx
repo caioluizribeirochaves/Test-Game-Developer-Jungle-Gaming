@@ -176,16 +176,17 @@ export const NetworkSimulatorModal: React.FC<NetworkSimulatorModalProps> = ({ on
         </div>
 
         {/* Reset Actions */}
-        <div className="flex items-center justify-between w-full pt-2 border-t border-[#243f5e]">
-          <button
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full pt-2 border-t border-[#243f5e]">
+          <PirateButton
+            variant="secondary"
+            size="sm"
             onClick={handleResetToDefaults}
-            className="text-xs text-red-300 hover:text-red-200 underline cursor-pointer"
           >
-            Reset DB & Restore Default Fixtures
-          </button>
+            Reset to default Features
+          </PirateButton>
 
           <PirateButton variant="primary" size="sm" onClick={onClose}>
-            CLOSE SIMULATOR
+            CLOSE
           </PirateButton>
         </div>
       </PiratePanel>

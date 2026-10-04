@@ -38,6 +38,7 @@ export const App: React.FC = () => {
   // Modals & Panels
   const [logInitialTab, setLogInitialTab] = useState<'ranking' | 'history'>('ranking');
   const [isChaosOpen, setIsChaosOpen] = useState(false);
+  const [isPauseOptionsOpen, setIsPauseOptionsOpen] = useState(false);
 
   // Last Completed Match Result & Sync State
   const [lastMatch, setLastMatch] = useState<MatchRecord | null>(getLastMatchResult);
@@ -82,15 +83,20 @@ export const App: React.FC = () => {
         setIsChaosOpen((prev) => !prev);
       }
       if (e.code === 'Escape' && screen === 'PLAYING') {
-        gameEngineRef.current?.togglePause();
+        if (isPauseOptionsOpen) {
+          setIsPauseOptionsOpen(false);
+        } else {
+          gameEngineRef.current?.togglePause();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [screen]);
+  }, [screen, isPauseOptionsOpen]);
 
   // 3. Start Game Session
   const startGame = () => {
+    setIsPauseOptionsOpen(false);
     setScreen('PLAYING');
     setIsPaused(false);
   };
@@ -268,16 +274,31 @@ export const App: React.FC = () => {
           />
 
           {/* Pause Modal Overlay */}
-          {isPaused && (
+          {isPaused && !isPauseOptionsOpen && (
             <PauseModal
               onResume={() => gameEngineRef.current?.resumeGame()}
               onOptions={() => {
-                // Pause remains active while in options
-                setScreen('OPTIONS');
+                setIsPauseOptionsOpen(true);
               }}
               onMainMenu={() => {
                 // Leaving combat abandons the active match (per README)
+                setIsPauseOptionsOpen(false);
                 setScreen('MENU');
+              }}
+            />
+          )}
+
+          {/* In-Game Options Overlay (keeps paused game scene visible underneath) */}
+          {isPaused && isPauseOptionsOpen && (
+            <OptionsModal
+              isInGame={true}
+              currentConfig={config}
+              onSaveConfig={(updated) => {
+                setConfig(updated);
+                saveStoredMatchConfig(updated);
+              }}
+              onClose={() => {
+                setIsPauseOptionsOpen(false);
               }}
             />
           )}

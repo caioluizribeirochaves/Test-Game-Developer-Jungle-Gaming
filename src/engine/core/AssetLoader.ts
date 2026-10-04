@@ -106,10 +106,28 @@ export class AssetLoader {
       this.loadProgress = 0.75;
       onProgress?.(this.loadProgress);
 
-      // 4. Load common tiles and backgrounds
+      // 4. Load common tiles, backgrounds, and HUD assets
       const additionalAssets = [
         { name: 'ui_scene_background', url: '/assets/ui_scene_background.png' },
         { name: 'logo_jungle_gaming', url: '/assets/logo_jungle_gaming.svg' },
+        { name: 'health_frame', url: '/assets/png/retina/ui/hud/health_frame.png' },
+        { name: 'health_fill_green', url: '/assets/png/retina/ui/hud/health_fill_green.png' },
+        { name: 'health_fill_amber', url: '/assets/png/retina/ui/hud/health_fill_amber.png' },
+        { name: 'health_fill_red', url: '/assets/png/retina/ui/hud/health_fill_red.png' },
+        { name: 'enemy_health_frame', url: '/assets/png/retina/ui/hud/enemy_health_frame.png' },
+        { name: 'enemy_health_fill_green', url: '/assets/png/retina/ui/hud/enemy_health_fill_green.png' },
+        { name: 'enemy_health_fill_red', url: '/assets/png/retina/ui/hud/enemy_health_fill_red.png' },
+        { name: 'counter_panel', url: '/assets/png/retina/ui/hud/counter_panel.png' },
+        { name: 'icon_heart', url: '/assets/png/retina/ui/hud/icon_heart.png' },
+        { name: 'icon_score', url: '/assets/png/retina/ui/hud/icon_score.png' },
+        { name: 'icon_time', url: '/assets/png/retina/ui/hud/icon_time.png' },
+        { name: 'water_tile_73', url: '/assets/png/retina/tiles/tile_73.png' },
+        { name: 'crew_1', url: '/assets/png/retina/ship_parts/crew_1.png' },
+        { name: 'crew_2', url: '/assets/png/retina/ship_parts/crew_2.png' },
+        { name: 'crew_3', url: '/assets/png/retina/ship_parts/crew_3.png' },
+        { name: 'crew_4', url: '/assets/png/retina/ship_parts/crew_4.png' },
+        { name: 'crew_5', url: '/assets/png/retina/ship_parts/crew_5.png' },
+        { name: 'crew_6', url: '/assets/png/retina/ship_parts/crew_6.png' },
       ];
 
       for (const asset of additionalAssets) {

@@ -9,10 +9,11 @@ export interface ObstacleBox {
   isRock?: boolean;
 }
 
-interface WaterTile {
-  sprite: Sprite;
+interface WaveRipple {
   baseX: number;
   baseY: number;
+  length: number;
+  speed: number;
   phase: number;
 }
 
@@ -37,7 +38,8 @@ export class MapGenerator {
     { x: 1500, y: 630, width: 45, height: 40, isRock: true },
   ];
 
-  private waterTiles: WaterTile[] = [];
+  private waveGfx: Graphics | null = null;
+  private waveRipples: WaveRipple[] = [];
 
   public isPointBlocked(x: number, y: number, radius: number = 0): boolean {
     // 1. Arena Boundary
@@ -68,9 +70,9 @@ export class MapGenerator {
 
   public findSafeSpawnPoint(playerX: number, playerY: number, minDistance: number): { x: number; y: number } {
     let attempts = 0;
-    const padding = 140;
+    const padding = 160;
 
-    while (attempts < 60) {
+    while (attempts < 80) {
       attempts++;
       const rx = padding + Math.random() * (this.width - padding * 2);
       const ry = padding + Math.random() * (this.height - padding * 2);
@@ -79,8 +81,19 @@ export class MapGenerator {
       const dy = ry - playerY;
       const dist = Math.hypot(dx, dy);
 
-      if (dist >= minDistance && !this.isPointBlocked(rx, ry, 60)) {
-        return { x: rx, y: ry };
+      if (dist >= minDistance && !this.isPointBlocked(rx, ry, 110)) {
+        let safeFromObstacles = true;
+        for (const box of this.obstacles) {
+          const closestX = Math.max(box.x, Math.min(rx, box.x + box.width));
+          const closestY = Math.max(box.y, Math.min(ry, box.y + box.height));
+          if (Math.hypot(rx - closestX, ry - closestY) < 120) {
+            safeFromObstacles = false;
+            break;
+          }
+        }
+        if (safeFromObstacles) {
+          return { x: rx, y: ry };
+        }
       }
     }
 
@@ -90,34 +103,11 @@ export class MapGenerator {
   public renderMap(container: Container): void {
     const assets = AssetLoader.getInstance();
 
-    // 1. Deep Ocean Background
-    const oceanGfx = new Graphics();
-    oceanGfx.rect(0, 0, this.width, this.height);
-    oceanGfx.fill(0x2d87aa); // Vibrant Caribbean tropical ocean
-    container.addChild(oceanGfx);
-
-    // 2. Shimmering Water Caustics (tile_73)
-    this.waterTiles = [];
-    const tileSize = 64;
-    const waterTex = assets.getTexture('tile_73');
-    for (let x = 0; x < this.width; x += tileSize * 2) {
-      for (let y = 0; y < this.height; y += tileSize * 2) {
-        const waterSprite = new Sprite(waterTex);
-        waterSprite.x = x;
-        waterSprite.y = y;
-        waterSprite.width = tileSize * 2;
-        waterSprite.height = tileSize * 2;
-        waterSprite.alpha = 0.22;
-        container.addChild(waterSprite);
-
-        this.waterTiles.push({
-          sprite: waterSprite,
-          baseX: x,
-          baseY: y,
-          phase: (x * 0.05 + y * 0.08) % (Math.PI * 2),
-        });
-      }
-    }
+    // 1. Subtle Maritime Safe Navigation Boundary (Marks arena gameplay limits over full-screen water)
+    const boundaryGfx = new Graphics();
+    boundaryGfx.rect(0, 0, this.width, this.height);
+    boundaryGfx.stroke({ color: 0xffffff, alpha: 0.15, width: 2.5 });
+    container.addChild(boundaryGfx);
 
     // 3. Shallow Water Shoals around Islands (Halos)
     const haloGfx = new Graphics();
@@ -151,14 +141,27 @@ export class MapGenerator {
   }
 
   /**
-   * Updates water ripples gently creating a living ocean wave effect.
+   * Updates water ripples gently creating a living ocean wave effect without seams or tone differences.
    */
   public updateWater(dt: number, totalTime: number): void {
-    for (const w of this.waterTiles) {
-      const wave = Math.sin(totalTime * 1.8 + w.phase);
-      w.sprite.alpha = 0.18 + wave * 0.08;
-      w.sprite.x = w.baseX + Math.cos(totalTime * 1.2 + w.phase) * 3;
-      w.sprite.y = w.baseY + Math.sin(totalTime * 1.2 + w.phase) * 3;
+    if (!this.waveGfx) return;
+    this.waveGfx.clear();
+
+    for (const r of this.waveRipples) {
+      const waveY = r.baseY + Math.sin(totalTime * 1.5 + r.phase) * 5;
+      const waveX = r.baseX + Math.cos(totalTime * 1.0 + r.phase) * 6;
+      const alpha = 0.20 + Math.sin(totalTime * 2.2 + r.phase) * 0.12;
+
+      // Primary wave crest arc
+      this.waveGfx.moveTo(waveX - r.length / 2, waveY);
+      this.waveGfx.quadraticCurveTo(waveX - r.length / 4, waveY - 3, waveX, waveY);
+      this.waveGfx.quadraticCurveTo(waveX + r.length / 4, waveY + 3, waveX + r.length / 2, waveY);
+      this.waveGfx.stroke({ width: 2.2, color: 0xffffff, alpha, cap: 'round' });
+
+      // Subtle cyan caustics under-ripple
+      this.waveGfx.moveTo(waveX - r.length * 0.3, waveY + 2.5);
+      this.waveGfx.quadraticCurveTo(waveX, waveY + 5, waveX + r.length * 0.3, waveY + 2.5);
+      this.waveGfx.stroke({ width: 1.6, color: 0x8be5f5, alpha: alpha * 0.65, cap: 'round' });
     }
   }
 

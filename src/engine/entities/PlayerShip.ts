@@ -27,12 +27,22 @@ export class PlayerShip {
 
   private container: Container;
   private shipSprite: Sprite;
-  private healthBarGfx: Graphics;
   private config: GameplayBalanceConfig;
 
   // Stages of ship deterioration
   private currentStage: number = 0;
   private readonly stageSprites = ['ship_2', 'ship_8', 'ship_14', 'ship_20'];
+
+  private shadowSprite: Sprite;
+  private fireContainer: Container;
+  private fireSprites: Sprite[] = [];
+  private fireAnimTimer: number = 0;
+  private fireFrameToggle: boolean = false;
+
+  private healthBarContainer: Container;
+  private healthFrameSprite: Sprite;
+  private healthFillSprite: Sprite;
+  private healthFillMask: Graphics;
 
   constructor(x: number, y: number, config: GameplayBalanceConfig, parent: Container) {
     this.x = x;
@@ -45,13 +55,63 @@ export class PlayerShip {
     parent.addChild(this.container);
 
     const assets = AssetLoader.getInstance();
+
+    // 1. Dynamic Ship Shadow cast on the water (matching media_1791068554369.png)
+    this.shadowSprite = new Sprite(assets.getTexture(this.stageSprites[0]!));
+    this.shadowSprite.anchor.set(0.5);
+    this.shadowSprite.tint = 0x071e2c;
+    this.shadowSprite.alpha = 0.36;
+    this.container.addChild(this.shadowSprite);
+
+    // 2. Player Ship Sprite
     this.shipSprite = new Sprite(assets.getTexture(this.stageSprites[0]!));
     this.shipSprite.anchor.set(0.5);
     this.container.addChild(this.shipSprite);
 
-    // Floating Health Bar directly above ship
-    this.healthBarGfx = new Graphics();
-    this.container.addChild(this.healthBarGfx);
+    // 3. Multi-flame billowing effect on sails & deck (matching media_1791068148655.png)
+    this.fireContainer = new Container();
+    this.shipSprite.addChild(this.fireContainer);
+
+    const flameConfigs = [
+      { x: -12, y: -10, baseAngle: 0.25, scale: 0.95 },
+      { x: 12, y: -7, baseAngle: -0.22, scale: 0.85 },
+      { x: -1, y: -18, baseAngle: 0.05, scale: 1.15 },
+      { x: -5, y: 14, baseAngle: -0.1, scale: 0.9 },
+    ];
+
+    this.fireSprites = flameConfigs.map((cfg) => {
+      const sp = new Sprite(assets.getTexture('fire_1'));
+      sp.anchor.set(0.5, 0.9);
+      sp.position.set(cfg.x, cfg.y);
+      sp.rotation = Math.PI + cfg.baseAngle; // Inverted towards bow (matching request)
+      sp.scale.set(cfg.scale);
+      sp.visible = false;
+      this.fireContainer.addChild(sp);
+      return sp;
+    });
+
+    // 4. Authentic Floating Health Bar above ship (matching Kenney assets)
+    this.healthBarContainer = new Container();
+    this.healthBarContainer.position.set(0, -52);
+    this.container.addChild(this.healthBarContainer);
+
+    // Frame sits underneath with wooden border and dark groove
+    this.healthFrameSprite = new Sprite(assets.getTexture('health_frame'));
+    this.healthFrameSprite.anchor.set(0.5);
+    this.healthFrameSprite.width = 70;
+    this.healthFrameSprite.height = 13.125;
+    this.healthBarContainer.addChild(this.healthFrameSprite);
+
+    // Fill sits on top of frame and is masked according to health percentage
+    this.healthFillSprite = new Sprite(assets.getTexture('health_fill_green'));
+    this.healthFillSprite.anchor.set(0.5);
+    this.healthFillSprite.width = 70;
+    this.healthFillSprite.height = 13.125;
+    this.healthBarContainer.addChild(this.healthFillSprite);
+
+    this.healthFillMask = new Graphics();
+    this.healthFillSprite.mask = this.healthFillMask;
+    this.healthBarContainer.addChild(this.healthFillMask);
 
     this.updatePosition();
     this.updateHealthBar();
@@ -105,6 +165,53 @@ export class PlayerShip {
       } else {
         // Full stop on direct collision
         this.speed = 0;
+      }
+    }
+
+    // Animated Fire on deck when health is low (matching media_1791068148655.png)
+    const healthRatio = this.health / this.maxHealth;
+    if (healthRatio <= 0.6) {
+      this.fireAnimTimer += dt;
+      if (this.fireAnimTimer >= 0.08) {
+        this.fireAnimTimer = 0;
+        this.fireFrameToggle = !this.fireFrameToggle;
+        const assets = AssetLoader.getInstance();
+        const tex1 = assets.getTexture(this.fireFrameToggle ? 'fire_1' : 'fire_2');
+        const tex2 = assets.getTexture(this.fireFrameToggle ? 'fire_2' : 'fire_1');
+        this.fireSprites[0]!.texture = tex1;
+        this.fireSprites[1]!.texture = tex2;
+        this.fireSprites[2]!.texture = tex1;
+        this.fireSprites[3]!.texture = tex2;
+      }
+
+      const sway = Math.sin(performance.now() * 0.008);
+      const flutter = Math.sin(performance.now() * 0.015);
+
+      // Primary flames on sails (<= 60% HP) - Inverted direction (pointing to other side / bow)
+      this.fireSprites[0]!.visible = true;
+      this.fireSprites[0]!.rotation = Math.PI + 0.25 + sway * 0.12;
+      this.fireSprites[0]!.scale.set(0.95 + flutter * 0.1);
+
+      this.fireSprites[1]!.visible = true;
+      this.fireSprites[1]!.rotation = Math.PI - 0.22 - sway * 0.12;
+      this.fireSprites[1]!.scale.set(0.88 + flutter * 0.08);
+
+      // Critical flames on mast & stern (<= 30% HP)
+      if (healthRatio <= 0.3) {
+        this.fireSprites[2]!.visible = true;
+        this.fireSprites[2]!.rotation = Math.PI + 0.05 + sway * 0.15;
+        this.fireSprites[2]!.scale.set(1.15 + flutter * 0.14);
+
+        this.fireSprites[3]!.visible = true;
+        this.fireSprites[3]!.rotation = Math.PI - 0.1 + sway * 0.08;
+        this.fireSprites[3]!.scale.set(0.92 + flutter * 0.1);
+      } else {
+        this.fireSprites[2]!.visible = false;
+        this.fireSprites[3]!.visible = false;
+      }
+    } else {
+      for (const sp of this.fireSprites) {
+        sp.visible = false;
       }
     }
 
@@ -186,29 +293,36 @@ export class PlayerShip {
     if (this.isDestroyed) return false;
 
     this.health = Math.max(0, this.health - amount);
+    if (this.health <= 0) {
+      this.isDestroyed = true;
+    }
     this.updateHealthBar();
     this.updateVisualStage();
 
-    if (this.health <= 0) {
-      this.isDestroyed = true;
+    if (this.isDestroyed) {
       return true; // Fatal blow
     }
     return false;
   }
 
   private updateVisualStage(): void {
-    const ratio = this.health / this.maxHealth;
     let newStage = 0;
-    if (ratio > 0.75) newStage = 0;
-    else if (ratio > 0.5) newStage = 1;
-    else if (ratio > 0.25) newStage = 2;
-    else newStage = 3;
+    if (this.health <= 0 || this.isDestroyed) {
+      newStage = 3; // Grey destroyed shipwreck (ship_20) ONLY when defeated!
+    } else {
+      const ratio = this.health / this.maxHealth;
+      if (ratio > 0.6) newStage = 0; // Pristine brown wood hull (ship_2)
+      else if (ratio > 0.3) newStage = 1; // Damaged brown wood hull (ship_8)
+      else newStage = 2; // Heavily damaged brown wood hull (ship_14) - never grey while alive!
+    }
 
     if (newStage !== this.currentStage) {
       this.currentStage = newStage;
       const assets = AssetLoader.getInstance();
       const spriteName = this.stageSprites[this.currentStage]!;
-      this.shipSprite.texture = assets.getTexture(spriteName);
+      const tex = assets.getTexture(spriteName);
+      this.shipSprite.texture = tex;
+      this.shadowSprite.texture = tex;
     }
   }
 
@@ -216,28 +330,39 @@ export class PlayerShip {
     this.container.x = this.x;
     this.container.y = this.y;
     // Sprite points UP in texture, so rotate angle + PI/2
-    this.shipSprite.rotation = this.angle + Math.PI / 2;
+    const rot = this.angle + Math.PI / 2;
+    this.shipSprite.rotation = rot;
+    this.shadowSprite.rotation = rot;
+    this.shadowSprite.position.set(9, 13);
   }
 
   private updateHealthBar(): void {
-    this.healthBarGfx.clear();
-    const w = 44;
-    const h = 6;
-    const yOffset = -52;
-
-    // Dark background frame
-    this.healthBarGfx.roundRect(-w / 2, yOffset, w, h, 2);
-    this.healthBarGfx.fill(0x1a2530);
-    this.healthBarGfx.stroke({ width: 1, color: 0xdfa837, alpha: 0.8 });
-
-    // Inner Health Fill
     const ratio = Math.max(0, Math.min(1, this.health / this.maxHealth));
-    const fillWidth = Math.max(0, (w - 2) * ratio);
-    const fillColor = ratio > 0.5 ? 0x2ecc71 : ratio > 0.25 ? 0xf39c12 : 0xe74c3c;
+    const assets = AssetLoader.getInstance();
 
-    if (fillWidth > 0) {
-      this.healthBarGfx.roundRect(-w / 2 + 1, yOffset + 1, fillWidth, h - 2, 1);
-      this.healthBarGfx.fill(fillColor);
+    // Color logic: 100 = green, below 100 to 50 = amber/yellow, below 50 to 0 = red
+    const fillName =
+      this.health >= this.maxHealth
+        ? 'health_fill_green'
+        : this.health >= this.maxHealth * 0.5
+        ? 'health_fill_amber'
+        : 'health_fill_red';
+    this.healthFillSprite.texture = assets.getTexture(fillName);
+
+    const totalW = 70;
+    const totalH = 13.125;
+    // Inner groove for player health bar runs from 27/256 to 229/256
+    const grooveStartX = -totalW / 2 + totalW * (27 / 256);
+    const grooveW = totalW * (202 / 256);
+    const fillW = grooveW * ratio;
+
+    this.healthFillMask.clear();
+    if (fillW > 0) {
+      this.healthFillMask.rect(grooveStartX, -totalH / 2, fillW, totalH);
+      this.healthFillMask.fill(0xffffff);
+      this.healthFillSprite.visible = true;
+    } else {
+      this.healthFillSprite.visible = false;
     }
   }
 

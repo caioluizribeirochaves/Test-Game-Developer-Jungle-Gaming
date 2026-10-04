@@ -37,9 +37,9 @@ export class DamageTextManager {
     });
 
     text.anchor.set(0.5);
-    // Position comfortably above the ship hull and health bar
+    // Superimpose directly over the ship hull and float upward
     text.x = x + (Math.random() - 0.5) * 16;
-    text.y = y - 48;
+    text.y = y - 10;
     text.scale.set(1.3); // Initial punchy impact scale
 
     this.container.addChild(text);

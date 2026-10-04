@@ -1,4 +1,4 @@
-import { Application, Container } from 'pixi.js';
+import { Application, Container, TilingSprite } from 'pixi.js';
 import { MatchConfig, GameplayBalanceConfig, DEFAULT_BALANCE_CONFIG } from '../config/gameConfig';
 import { AssetLoader } from './AssetLoader';
 import { MapGenerator } from './MapGenerator';
@@ -22,6 +22,12 @@ export interface GameEngineEvents {
 
 export class GameEngine {
   private app: Application | null = null;
+  private waterBackground: TilingSprite | null = null;
+  private waterScrollX: number = 0;
+  private waterScrollY: number = 0;
+  private playerWakeTimer: number = 0;
+  private enemyWakeTimer: number = 0;
+
   private rootContainer: Container | null = null;
   private gameWorld: Container | null = null;
   private terrainLayer: Container | null = null;
@@ -89,7 +95,17 @@ export class GameEngine {
 
     canvasContainer.appendChild(this.app.canvas);
 
-    // 2. Setup Layer Containers
+    // 2. Setup Full-Screen Animated Water Background (tile_73)
+    const assets = AssetLoader.getInstance();
+    const waterTex = assets.getTexture('water_tile_73');
+    this.waterBackground = new TilingSprite({
+      texture: waterTex,
+      width: this.app.screen.width,
+      height: this.app.screen.height,
+    });
+    this.app.stage.addChild(this.waterBackground);
+
+    // 3. Setup Layer Containers
     this.rootContainer = new Container();
     this.app.stage.addChild(this.rootContainer);
 
@@ -98,10 +114,15 @@ export class GameEngine {
     this.rootContainer.addChild(this.gameWorld);
 
     this.terrainLayer = new Container();
+    this.terrainLayer.zIndex = 10;
     this.wakeLayer = new Container();
+    this.wakeLayer.zIndex = 20;
     this.shipsLayer = new Container();
+    this.shipsLayer.zIndex = 30;
     this.projectilesLayer = new Container();
+    this.projectilesLayer.zIndex = 40;
     this.effectsLayer = new Container();
+    this.effectsLayer.zIndex = 50;
     this.damageTextLayer = new Container();
     this.damageTextLayer.zIndex = 9999;
 
@@ -172,6 +193,12 @@ export class GameEngine {
     // Center arena in viewport
     this.rootContainer.x = (screenW - this.map.width * scale) / 2;
     this.rootContainer.y = (screenH - this.map.height * scale) / 2;
+
+    if (this.waterBackground) {
+      this.waterBackground.width = screenW;
+      this.waterBackground.height = screenH;
+      this.waterBackground.tileScale.set(scale);
+    }
   }
 
   private handleVisibilityChange(): void {
@@ -259,6 +286,13 @@ export class GameEngine {
     }
 
     // Update living ocean caustics & wake VFX
+    this.waterScrollX += dt * 14;
+    this.waterScrollY += dt * 8;
+    if (this.waterBackground && this.rootContainer) {
+      const scale = this.rootContainer.scale.x;
+      this.waterBackground.tilePosition.x = this.rootContainer.x + this.waterScrollX * scale;
+      this.waterBackground.tilePosition.y = this.rootContainer.y + this.waterScrollY * scale;
+    }
     this.map.updateWater(dt, this.elapsedTime);
     this.wakeParticleMgr?.update(dt);
 
@@ -280,9 +314,11 @@ export class GameEngine {
       }
     );
 
-    // Audio and wake for player sailing motion
+    // Audio and gentle wake for player sailing motion
     this.audio.setSailingVolume(this.player.speed > 10 ? 0.35 : 0);
-    if (this.player.speed > 12) {
+    this.playerWakeTimer += dt;
+    if (this.player.speed > 12 && this.playerWakeTimer >= 0.08) {
+      this.playerWakeTimer = 0;
       this.wakeParticleMgr?.spawnShipWake(
         this.player.x,
         this.player.y,
@@ -293,12 +329,17 @@ export class GameEngine {
 
     // 4. Update Enemies with Obstacle Avoidance & Wake
     const enemyPositions = this.enemies.map((e) => ({ x: e.x, y: e.y, radius: e.radius }));
+    this.enemyWakeTimer += dt;
+    const shouldSpawnEnemyWake = this.enemyWakeTimer >= 0.08;
+    if (shouldSpawnEnemyWake) {
+      this.enemyWakeTimer = 0;
+    }
 
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i]!;
 
-      // Spawn wake behind moving enemy ships
-      if (enemy.speed > 12) {
+      // Spawn soft wake behind moving enemy ships
+      if (enemy.speed > 12 && shouldSpawnEnemyWake) {
         this.wakeParticleMgr?.spawnShipWake(
           enemy.x,
           enemy.y,

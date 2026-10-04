@@ -47,10 +47,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   };
 
   return (
-    <div
-      className="relative w-full h-full flex flex-col items-center justify-center bg-cover bg-center overflow-x-hidden overflow-y-auto p-4 select-none"
-      style={{ backgroundImage: 'url(/assets/ui_scene_background.png)' }}
-    >
+    <div className="relative w-full h-full flex flex-col items-center justify-center overflow-x-hidden overflow-y-auto p-4 select-none">
+      {/* Subtle darkened and slightly blurred background scene for high contrast focus */}
+      <div
+        className="absolute inset-0 bg-cover bg-center filter blur-[2.5px] scale-105 pointer-events-none"
+        style={{ backgroundImage: 'url(/assets/ui_scene_background.png)' }}
+      />
+      <div className="absolute inset-0 bg-black/35 pointer-events-none" />
+
       {/* Sound Mute Toggle (Top Right) */}
       <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
         <button
@@ -64,31 +68,25 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
       {/* Central Authentic Pirate Menu Panel (matching media_1791050724851.png) */}
       <PiratePanel size="menu" className="my-auto z-10">
-        {/* Title Plaque */}
+        {/* Authentic Pirate Battle Title Asset */}
         <div className="w-full flex flex-col items-center pt-2">
-          <div className="relative w-[270px] sm:w-[300px] h-[72px] sm:h-[78px] flex items-center justify-center filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.6)]">
-            <img
-              src="/assets/png/retina/ui/menu/button_primary_normal.png"
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-fill pointer-events-none"
-            />
-            <h1 className="relative z-10 font-serif font-black tracking-widest text-2xl sm:text-3xl text-[#3d240c] uppercase drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]">
-              PIRATE BATTLE
-            </h1>
-          </div>
-          <p className="font-serif text-[10px] sm:text-[11px] font-bold tracking-[0.25em] text-[#dfa837] uppercase mt-2.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+          <img
+            src="/assets/png/retina/ui/menu/title_pirate_battle.png"
+            alt="Pirate Battle"
+            className="w-[280px] sm:w-[320px] max-w-[90%] h-auto object-contain filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.6)]"
+          />
+          <p className="font-serif text-[10px] sm:text-[11px] font-bold tracking-[0.25em] text-[#dfa837] uppercase mt-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
             SET SAIL. TAKE COMMAND.
           </p>
         </div>
 
-        {/* Primary Action Buttons: PLAY & OPTIONS */}
+        {/* Primary Action Buttons: PLAY & OPTIONS (Equalized Dimensions & Perfectly Aligned) */}
         <div className="flex flex-col gap-3.5 my-auto w-full items-center">
           <PirateButton variant="primary" size="lg" onClick={onPlay}>
             PLAY
           </PirateButton>
 
-          <PirateButton variant="primary" size="md" onClick={onOptions}>
+          <PirateButton variant="primary" size="lg" onClick={onOptions}>
             OPTIONS
           </PirateButton>
         </div>

@@ -14,12 +14,14 @@ export interface OptionsModalProps {
   currentConfig: MatchConfig;
   onSaveConfig: (updated: MatchConfig) => void;
   onClose: () => void;
+  isInGame?: boolean;
 }
 
 export const OptionsModal: React.FC<OptionsModalProps> = ({
   currentConfig,
   onSaveConfig,
   onClose,
+  isInGame = false,
 }) => {
   const [sessionDuration, setSessionDuration] = React.useState(currentConfig.sessionDuration);
   const [enemySpawnInterval, setEnemySpawnInterval] = React.useState(
@@ -78,8 +80,12 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
 
   return (
     <div
-      className="relative w-full h-full flex flex-col items-center justify-center bg-cover bg-center overflow-x-hidden overflow-y-auto p-4 sm:p-6"
-      style={{ backgroundImage: 'url(/assets/ui_scene_background.png)' }}
+      className={
+        isInGame
+          ? 'absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center overflow-x-hidden overflow-y-auto p-4 sm:p-6'
+          : 'relative w-full h-full flex flex-col items-center justify-center bg-cover bg-center overflow-x-hidden overflow-y-auto p-4 sm:p-6'
+      }
+      style={isInGame ? undefined : { backgroundImage: 'url(/assets/ui_scene_background.png)' }}
     >
       <PiratePanel size="md">
         <h2 className="text-2xl sm:text-3xl font-extrabold text-[#fce79f] tracking-wider mb-5 drop-shadow-md">
@@ -95,6 +101,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
             <PirateButton
               variant="round"
               size="md"
+              icon="minus"
               onClick={() => handleDurationChange(-MATCH_CONFIG_LIMITS.durationStep)}
               disabled={sessionDuration <= MATCH_CONFIG_LIMITS.minDuration}
               aria-label="Decrease session duration"
@@ -109,6 +116,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
             <PirateButton
               variant="round"
               size="md"
+              icon="plus"
               onClick={() => handleDurationChange(MATCH_CONFIG_LIMITS.durationStep)}
               disabled={sessionDuration >= MATCH_CONFIG_LIMITS.maxDuration}
               aria-label="Increase session duration"
@@ -130,6 +138,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
             <PirateButton
               variant="round"
               size="md"
+              icon="minus"
               onClick={() => handleSpawnChange(-0.5)}
               disabled={enemySpawnInterval <= MATCH_CONFIG_LIMITS.minSpawnInterval}
               aria-label="Decrease spawn interval"
@@ -144,6 +153,7 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
             <PirateButton
               variant="round"
               size="md"
+              icon="plus"
               onClick={() => handleSpawnChange(0.5)}
               disabled={enemySpawnInterval >= MATCH_CONFIG_LIMITS.maxSpawnInterval}
               aria-label="Increase spawn interval"
@@ -194,8 +204,8 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
 
         {/* Feedback message when saved */}
         {savedFeedback && (
-          <div className="text-xs text-emerald-400 font-bold mb-3 animate-bounce">
-            ✓ Settings saved!
+          <div className="text-xs text-emerald-400 font-bold mb-3 animate-bounce text-center">
+            Options saved. They will be applied on your next battle
           </div>
         )}
 
@@ -210,9 +220,9 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
           </PirateButton>
         </div>
 
-        {/* Bottom Main Menu Button */}
+        {/* Bottom Navigation Button */}
         <PirateButton variant="primary" size="md" onClick={onClose}>
-          MAIN MENU
+          {isInGame ? 'BACK' : 'MAIN MENU'}
         </PirateButton>
       </PiratePanel>
     </div>

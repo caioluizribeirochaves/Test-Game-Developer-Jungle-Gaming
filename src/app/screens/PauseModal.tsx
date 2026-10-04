@@ -80,7 +80,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({
               </div>
             </div>
 
-            <PirateButton variant="secondary" size="sm" onClick={() => setShowControlsInline(false)}>
+            <PirateButton variant="secondary" size="md" onClick={() => setShowControlsInline(false)}>
               BACK TO PAUSE
             </PirateButton>
           </div>

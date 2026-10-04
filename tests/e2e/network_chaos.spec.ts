@@ -19,7 +19,7 @@ test.describe('6. Network Conditions and Fault Injection (MSW Chaos)', () => {
 
     // Select Empty Lists Mode
     await page.getByText('⚪ Empty Lists').click();
-    await page.getByRole('button', { name: 'CLOSE SIMULATOR' }).click();
+    await page.getByRole('button', { name: 'CLOSE' }).click();
 
     // Open Ranking
     await page.getByRole('button', { name: 'RANKING' }).click();
@@ -36,8 +36,8 @@ test.describe('6. Network Conditions and Fault Injection (MSW Chaos)', () => {
     } else {
       await page.keyboard.press('Control+Shift+KeyD');
     }
-    await page.getByText('Reset DB & Restore Default Fixtures').click();
-    await page.getByRole('button', { name: 'CLOSE SIMULATOR' }).click();
+    await page.getByRole('button', { name: /Reset to default/i }).click();
+    await page.getByRole('button', { name: 'CLOSE' }).click();
   });
 
   test('should simulate HTTP 500 and verify graceful error states with retry option', async ({ page }) => {
@@ -50,7 +50,7 @@ test.describe('6. Network Conditions and Fault Injection (MSW Chaos)', () => {
 
     // Select HTTP 500
     await page.getByText('🔴 HTTP 500 Internal Error').click();
-    await page.getByRole('button', { name: 'CLOSE SIMULATOR' }).click();
+    await page.getByRole('button', { name: 'CLOSE' }).click();
 
     // Open Ranking and verify error fallback
     await page.getByRole('button', { name: 'RANKING' }).click();
@@ -65,7 +65,7 @@ test.describe('6. Network Conditions and Fault Injection (MSW Chaos)', () => {
       await page.keyboard.press('Control+Shift+KeyD');
     }
     await page.getByText('🟢 Normal (Success)').click();
-    await page.getByRole('button', { name: 'CLOSE SIMULATOR' }).click();
+    await page.getByRole('button', { name: 'CLOSE' }).click();
 
     // Verify recovery
     await page.getByRole('button', { name: 'RANKING' }).click();

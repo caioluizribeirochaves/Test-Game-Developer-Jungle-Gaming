@@ -281,6 +281,7 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
               <PirateButton
                 variant="round"
                 size="sm"
+                icon="turn_left"
                 onClick={() => setRankingPage((p) => Math.max(1, p - 1))}
                 disabled={rankingPage <= 1}
                 aria-label="Previous Page"
@@ -295,6 +296,7 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
               <PirateButton
                 variant="round"
                 size="sm"
+                icon="turn_right"
                 onClick={() => setRankingPage((p) => Math.min(rankingData.totalPages, p + 1))}
                 disabled={rankingPage >= rankingData.totalPages}
                 aria-label="Next Page"
@@ -309,6 +311,7 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
               <PirateButton
                 variant="round"
                 size="sm"
+                icon="turn_left"
                 onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
                 disabled={historyPage <= 1}
                 aria-label="Previous Page"
@@ -323,6 +326,7 @@ export const CaptainsLogModal: React.FC<CaptainsLogModalProps> = ({
               <PirateButton
                 variant="round"
                 size="sm"
+                icon="turn_right"
                 onClick={() => setHistoryPage((p) => Math.min(historyData.totalPages, p + 1))}
                 disabled={historyPage >= historyData.totalPages}
                 aria-label="Next Page"

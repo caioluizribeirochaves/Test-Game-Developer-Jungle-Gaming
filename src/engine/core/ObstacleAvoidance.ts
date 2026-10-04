@@ -1,4 +1,5 @@
 import { ObstacleBox } from './MapGenerator';
+import { NavGrid } from './NavGrid';
 
 export interface EnemyPosition {
   x: number;
@@ -9,7 +10,7 @@ export interface EnemyPosition {
 export class ObstacleAvoidance {
   /**
    * Computes the desired steering angle and speed multiplier to reach (targetX, targetY)
-   * while smoothly avoiding islands, sea rocks, arena edges, and neighboring enemies.
+   * while smoothly routing around islands, sea rocks, arena edges, and neighboring enemies.
    */
   public static computeSteering(
     currentX: number,
@@ -24,9 +25,17 @@ export class ObstacleAvoidance {
     mapBlockedCheck: (x: number, y: number, r: number) => boolean,
     otherEnemies?: EnemyPosition[]
   ): { desiredAngle: number; speedMultiplier: number } {
-    // 1. Primary seek vector towards target
-    const toTargetX = targetX - currentX;
-    const toTargetY = targetY - currentY;
+    // 1. Intelligent Global Pathfinding via NavGrid:
+    // If line-of-sight to target is clear, heads straight for target.
+    // If an island blocks the way, routes through shortest A* waypoints around the obstacle.
+    const nav = NavGrid.getInstance(arenaWidth, arenaHeight, obstacles);
+    const waypoint = nav.getNextWaypoint(currentX, currentY, targetX, targetY);
+    const effectiveTargetX = waypoint.x;
+    const effectiveTargetY = waypoint.y;
+
+    // 2. Primary seek vector towards effective target
+    const toTargetX = effectiveTargetX - currentX;
+    const toTargetY = effectiveTargetY - currentY;
     const targetDist = Math.hypot(toTargetX, toTargetY);
     let dirX = targetDist > 1 ? toTargetX / targetDist : 0;
     let dirY = targetDist > 1 ? toTargetY / targetDist : 0;
@@ -34,92 +43,107 @@ export class ObstacleAvoidance {
     let steerX = dirX;
     let steerY = dirY;
 
-    // 2. Continuous Repulsive Potential Field from nearby obstacles
-    const dangerMargin = radius + 85;
+    // 3. Smooth Local Repulsive & Tangential Field when very close to obstacles
+    const dangerMargin = radius + 20;
     for (const box of obstacles) {
       const closestX = Math.max(box.x, Math.min(currentX, box.x + box.width));
       const closestY = Math.max(box.y, Math.min(currentY, box.y + box.height));
       const dist = Math.hypot(currentX - closestX, currentY - closestY);
 
       if (dist < dangerMargin) {
-        const repelWeight = Math.pow((dangerMargin - dist) / dangerMargin, 1.8) * 3.2;
+        const repelWeight = Math.pow((dangerMargin - dist) / dangerMargin, 1.2) * 1.8;
         const normX = dist > 0.1 ? (currentX - closestX) / dist : Math.cos(currentAngle + Math.PI / 2);
         const normY = dist > 0.1 ? (currentY - closestY) / dist : Math.sin(currentAngle + Math.PI / 2);
+
+        // Add outward repulsive normal
         steerX += normX * repelWeight;
         steerY += normY * repelWeight;
+
+        // Add tangent glide along the obstacle boundary towards effective target
+        const tang1X = -normY;
+        const tang1Y = normX;
+        const dot1 = tang1X * dirX + tang1Y * dirY;
+        const tangSign = dot1 >= 0 ? 1 : -1;
+        steerX += tang1X * tangSign * (repelWeight * 1.2);
+        steerY += tang1Y * tangSign * (repelWeight * 1.2);
       }
     }
 
-    // 3. Boundary Repulsion (keep ships inside the arena)
-    const edgeMargin = 90;
-    if (currentX < edgeMargin) steerX += ((edgeMargin - currentX) / edgeMargin) * 3.0;
-    if (currentX > arenaWidth - edgeMargin) steerX -= ((currentX - (arenaWidth - edgeMargin)) / edgeMargin) * 3.0;
-    if (currentY < edgeMargin) steerY += ((edgeMargin - currentY) / edgeMargin) * 3.0;
-    if (currentY > arenaHeight - edgeMargin) steerY -= ((currentY - (arenaHeight - edgeMargin)) / edgeMargin) * 3.0;
+    // 4. Boundary Repulsion (keep ships inside the open arena)
+    const edgeMargin = 55;
+    if (currentX < edgeMargin) {
+      const p = (edgeMargin - currentX) / edgeMargin;
+      steerX += p * 3.0;
+    }
+    if (currentX > arenaWidth - edgeMargin) {
+      const p = (currentX - (arenaWidth - edgeMargin)) / edgeMargin;
+      steerX -= p * 3.0;
+    }
+    if (currentY < edgeMargin) {
+      const p = (edgeMargin - currentY) / edgeMargin;
+      steerY += p * 3.0;
+    }
+    if (currentY > arenaHeight - edgeMargin) {
+      const p = (currentY - (arenaHeight - edgeMargin)) / edgeMargin;
+      steerY -= p * 3.0;
+    }
 
-    // 4. Whisker / Feeler Raycasts along current heading
-    // Central feeler (ahead)
-    const forwardDist = 110;
+    // 5. Whisker feelers along current heading
+    const forwardDist = 50;
+    const isProbeBlocked = (px: number, py: number, pr: number): boolean => {
+      if (px < 40 || px > arenaWidth - 40 || py < 40 || py > arenaHeight - 40) return true;
+      return mapBlockedCheck(px, py, pr);
+    };
+
     const centerProbeX = currentX + Math.cos(currentAngle) * forwardDist;
     const centerProbeY = currentY + Math.sin(currentAngle) * forwardDist;
-    const centerBlocked = mapBlockedCheck(centerProbeX, centerProbeY, radius * 0.7);
+    const centerBlocked = isProbeBlocked(centerProbeX, centerProbeY, radius * 0.7);
 
-    // Left and Right whiskers
-    const whiskerAngle = 0.65; // ~37 degrees
-    const whiskerDist = 85;
+    const whiskerAngle = 0.55;
+    const whiskerDist = 40;
     const leftProbeX = currentX + Math.cos(currentAngle - whiskerAngle) * whiskerDist;
     const leftProbeY = currentY + Math.sin(currentAngle - whiskerAngle) * whiskerDist;
-    const leftBlocked = mapBlockedCheck(leftProbeX, leftProbeY, radius * 0.6);
+    const leftBlocked = isProbeBlocked(leftProbeX, leftProbeY, radius * 0.6);
 
     const rightProbeX = currentX + Math.cos(currentAngle + whiskerAngle) * whiskerDist;
     const rightProbeY = currentY + Math.sin(currentAngle + whiskerAngle) * whiskerDist;
-    const rightBlocked = mapBlockedCheck(rightProbeX, rightProbeY, radius * 0.6);
+    const rightBlocked = isProbeBlocked(rightProbeX, rightProbeY, radius * 0.6);
 
     let speedMultiplier = 1.0;
 
     if (centerBlocked || leftBlocked || rightBlocked) {
-      speedMultiplier = 0.75; // Slow down slightly when navigating tight obstacles
+      speedMultiplier = 0.85;
 
       if (centerBlocked) {
         if (!leftBlocked && rightBlocked) {
-          // Steer hard left
+          steerX += -Math.sin(currentAngle) * 2.5;
+          steerY += Math.cos(currentAngle) * 2.5;
+        } else if (leftBlocked && !rightBlocked) {
+          steerX += Math.sin(currentAngle) * 2.5;
+          steerY += -Math.cos(currentAngle) * 2.5;
+        } else {
+          // Choose whichever side aligns with target
           const leftNormX = -Math.sin(currentAngle);
           const leftNormY = Math.cos(currentAngle);
-          steerX += leftNormX * 3.5;
-          steerY += leftNormY * 3.5;
-        } else if (leftBlocked && !rightBlocked) {
-          // Steer hard right
-          const rightNormX = Math.sin(currentAngle);
-          const rightNormY = -Math.cos(currentAngle);
-          steerX += rightNormX * 3.5;
-          steerY += rightNormY * 3.5;
-        } else {
-          // Both sides tight - steer away from the closer wall
-          const leftClearance = mapBlockedCheck(
-            currentX + Math.cos(currentAngle - 1.2) * 60,
-            currentY + Math.sin(currentAngle - 1.2) * 60,
-            radius * 0.5
-          );
-          if (!leftClearance) {
-            steerX += -Math.sin(currentAngle) * 4.0;
-            steerY += Math.cos(currentAngle) * 4.0;
+          const dotLeft = leftNormX * dirX + leftNormY * dirY;
+          if (dotLeft > 0) {
+            steerX += leftNormX * 2.5;
+            steerY += leftNormY * 2.5;
           } else {
-            steerX += Math.sin(currentAngle) * 4.0;
-            steerY += -Math.cos(currentAngle) * 4.0;
+            steerX -= leftNormX * 2.5;
+            steerY -= leftNormY * 2.5;
           }
         }
       } else if (leftBlocked) {
-        // Nudge away from left
-        steerX += Math.sin(currentAngle) * 2.2;
-        steerY += -Math.cos(currentAngle) * 2.2;
+        steerX += Math.sin(currentAngle) * 1.5;
+        steerY += -Math.cos(currentAngle) * 1.5;
       } else if (rightBlocked) {
-        // Nudge away from right
-        steerX += -Math.sin(currentAngle) * 2.2;
-        steerY += Math.cos(currentAngle) * 2.2;
+        steerX += -Math.sin(currentAngle) * 1.5;
+        steerY += Math.cos(currentAngle) * 1.5;
       }
     }
 
-    // 5. Swarm Separation (keep enemies from piling into a cluster)
+    // 6. Swarm Separation (keep enemies from piling into each other)
     if (otherEnemies && otherEnemies.length > 0) {
       const sepDist = 55;
       for (const other of otherEnemies) {
@@ -127,7 +151,7 @@ export class ObstacleAvoidance {
         const dy = currentY - other.y;
         const dist = Math.hypot(dx, dy);
         if (dist > 0.1 && dist < sepDist) {
-          const sepForce = ((sepDist - dist) / sepDist) * 1.8;
+          const sepForce = ((sepDist - dist) / sepDist) * 2.0;
           steerX += (dx / dist) * sepForce;
           steerY += (dy / dist) * sepForce;
         }

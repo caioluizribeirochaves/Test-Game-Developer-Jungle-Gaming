@@ -113,68 +113,97 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   const timeFormatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
   const healthPercent = Math.max(0, Math.min(100, Math.round((health / maxHealth) * 100)));
+  const fillSrc =
+    health >= maxHealth
+      ? '/assets/png/retina/ui/hud/health_fill_green.png'
+      : healthPercent >= 50
+      ? '/assets/png/retina/ui/hud/health_fill_amber.png'
+      : '/assets/png/retina/ui/hud/health_fill_red.png';
 
   return (
     <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-3 sm:p-5 overflow-hidden select-none">
       {/* Top Header Bar */}
       <div className="w-full flex items-start justify-between">
-        {/* Top-Left: Wooden Health Bar Frame with Heart */}
-        <div className="flex items-center gap-1 pointer-events-auto">
-          {/* Heart Icon */}
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-b from-[#e6b756] to-[#80550f] border-2 border-[#4a2e07] shadow-lg flex items-center justify-center -mr-2.5 z-10">
+        {/* Top-Left: Authentic Health Bar Frame with Heart Medallion */}
+        <div className="relative flex items-center gap-2.5 sm:gap-3 pointer-events-auto filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.7)]">
+          {/* Heart Icon Medallion */}
+          <div className="relative z-20 w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center pointer-events-none">
             <img
               src="/assets/png/retina/ui/hud/icon_heart.png"
-              alt="Heart"
-              className="w-5 h-5 sm:w-6 sm:h-6 object-contain drop-shadow"
+              alt="Health"
+              className="w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
             />
           </div>
 
-          {/* Wooden Health Frame */}
-          <div className="relative w-44 sm:w-56 h-8 sm:h-9 bg-gradient-to-b from-[#5c3710] to-[#381f06] border-2 border-[#9b6f1e] rounded-xl shadow-lg p-1 flex items-center">
-            <div className="w-full h-full bg-[#152332] rounded-lg overflow-hidden relative border border-[#2b3a4a]">
-              {/* Health Fill Bar */}
-              <div
-                className={`h-full transition-all duration-200 rounded-sm ${
-                  healthPercent > 50
-                    ? 'bg-gradient-to-r from-[#2ecc71] to-[#27ae60]'
-                    : healthPercent > 25
-                    ? 'bg-gradient-to-r from-[#f39c12] to-[#d35400]'
-                    : 'bg-gradient-to-r from-[#e74c3c] to-[#c0392b]'
-                }`}
-                style={{ width: `${healthPercent}%` }}
+          {/* Health Frame with Authentic Fill Asset */}
+          <div className="relative w-[210px] sm:w-[260px] h-[38px] sm:h-[44px] flex items-center">
+            {/* Base Health Frame Graphic (wood + dark groove background) */}
+            <img
+              src="/assets/png/retina/ui/hud/health_frame.png"
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-fill pointer-events-none z-0"
+            />
+            {/* Authentic Fill overlay (clipped by health percentage) */}
+            <div
+              className="absolute inset-0 z-10 overflow-hidden pointer-events-none transition-all duration-200"
+              style={{
+                clipPath:
+                  healthPercent > 0
+                    ? `inset(0 ${Math.max(0, 100 - (10.55 + 0.789 * healthPercent))}% 0 0)`
+                    : 'inset(0 100% 0 0)',
+              }}
+            >
+              <img
+                src={fillSrc}
+                alt=""
+                aria-hidden="true"
+                className="w-full h-full object-fill pointer-events-none"
               />
-              {/* Numerical Text Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center text-xs sm:text-sm font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] tracking-wider">
-                {health} / {maxHealth}
-              </div>
+            </div>
+            {/* Numerical Text Overlay */}
+            <div className="relative z-20 w-full text-center text-xs sm:text-sm font-serif font-black text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-wider pl-2">
+              {health} / {maxHealth}
             </div>
           </div>
         </div>
 
         {/* Top-Right: Score, Time & Pause Button */}
         <div className="flex items-center gap-2 sm:gap-3 pointer-events-auto">
-          {/* Score Counter Badge */}
-          <div className="flex items-center gap-1.5 bg-gradient-to-b from-[#5c3710] to-[#381f06] border-2 border-[#9b6f1e] rounded-xl px-3 sm:px-4 py-1.5 shadow-lg text-[#f7edd2]">
+          {/* Score Counter Panel - Centered Content */}
+          <div className="relative w-[105px] sm:w-[115px] h-[38px] sm:h-[42px] flex items-center justify-center gap-2 sm:gap-2.5 px-3 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
+            <img
+              src="/assets/png/retina/ui/hud/counter_panel.png"
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+            />
             <img
               src="/assets/png/retina/ui/hud/icon_score.png"
               alt="Score"
-              className="w-4 h-4 sm:w-5 sm:h-5 object-contain"
+              className="relative z-10 w-5 h-5 sm:w-5.5 sm:h-5.5 object-contain pointer-events-none drop-shadow"
             />
-            <span className="font-bold text-sm sm:text-base tracking-wider text-yellow-300 font-mono">
+            <span className="relative z-10 font-bold text-sm sm:text-base tracking-wider text-yellow-300 font-mono drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
               {score}
             </span>
           </div>
 
-          {/* Time Counter Badge */}
-          <div className="flex items-center gap-1.5 bg-gradient-to-b from-[#5c3710] to-[#381f06] border-2 border-[#9b6f1e] rounded-xl px-3 sm:px-4 py-1.5 shadow-lg text-[#f7edd2]">
+          {/* Time Counter Panel - Centered Content */}
+          <div className="relative w-[115px] sm:w-[125px] h-[38px] sm:h-[42px] flex items-center justify-center gap-2 sm:gap-2.5 px-3 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
+            <img
+              src="/assets/png/retina/ui/hud/counter_panel.png"
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+            />
             <img
               src="/assets/png/retina/ui/hud/icon_time.png"
               alt="Time"
-              className="w-4 h-4 sm:w-5 sm:h-5 object-contain"
+              className="relative z-10 w-5 h-5 sm:w-5.5 sm:h-5.5 object-contain pointer-events-none drop-shadow"
             />
             <span
-              className={`font-mono font-bold text-sm sm:text-base tracking-wider ${
-                timeRemaining <= 10 ? 'text-red-400 animate-pulse' : 'text-amber-100'
+              className={`relative z-10 font-mono font-bold text-sm sm:text-base tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] ${
+                timeRemaining <= 10 ? 'text-red-400 animate-pulse' : 'text-[#f5e6be]'
               }`}
             >
               {timeFormatted}
