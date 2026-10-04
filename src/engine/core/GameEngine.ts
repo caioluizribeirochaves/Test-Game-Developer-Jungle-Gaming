@@ -60,6 +60,7 @@ export class GameEngine {
   private isRunning: boolean = false;
   private isPaused: boolean = false;
   private isEnded: boolean = false;
+  private lastShipCollisionTime: number = 0;
 
   // Frame timing & profiling stats
   private lastTime: number = 0;
@@ -296,12 +297,25 @@ export class GameEngine {
     this.map.updateWater(dt, this.elapsedTime);
     this.wakeParticleMgr?.update(dt);
 
-    // 3. Update Player
+    // 3. Update Player with island and enemy solid collision
     const playerInputs = this.input.getInputState();
+    const isPlayerBlocked = (x: number, y: number, r: number) => {
+      if (this.map.isPointBlocked(x, y, r)) return true;
+      for (const enemy of this.enemies) {
+        if (!enemy.isDestroyed && enemy instanceof ShooterEnemy) {
+          const d = Math.hypot(x - enemy.x, y - enemy.y);
+          if (d < r + enemy.radius) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
     this.player.update(
       dt,
       playerInputs,
-      (x, y, r) => this.map.isPointBlocked(x, y, r),
+      isPlayerBlocked,
       (proj) => {
         if (this.projectilesLayer && proj.container.parent !== this.projectilesLayer) {
           this.projectilesLayer.addChild(proj.container);
@@ -327,8 +341,13 @@ export class GameEngine {
       );
     }
 
-    // 4. Update Enemies with Obstacle Avoidance & Wake
+    // 4. Update Enemies with Obstacle Avoidance, Player Collision & Wake
     const enemyPositions = this.enemies.map((e) => ({ x: e.x, y: e.y, radius: e.radius }));
+    const shooterEntitiesWithPlayer = [
+      { x: this.player.x, y: this.player.y, radius: this.player.radius },
+      ...enemyPositions,
+    ];
+
     this.enemyWakeTimer += dt;
     const shouldSpawnEnemyWake = this.enemyWakeTimer >= 0.08;
     if (shouldSpawnEnemyWake) {
@@ -382,11 +401,22 @@ export class GameEngine {
           continue;
         }
       } else if (enemy instanceof ShooterEnemy) {
+        const isShooterBlocked = (x: number, y: number, r: number) => {
+          if (this.map.isPointBlocked(x, y, r)) return true;
+          if (this.player && !this.player.isDestroyed) {
+            const d = Math.hypot(x - this.player.x, y - this.player.y);
+            if (d < r + this.player.radius) {
+              return true;
+            }
+          }
+          return false;
+        };
+
         enemy.update(
           dt,
           this.player.x,
           this.player.y,
-          (x, y, r) => this.map.isPointBlocked(x, y, r),
+          isShooterBlocked,
           (proj) => {
             if (this.projectilesLayer && proj.container.parent !== this.projectilesLayer) {
               this.projectilesLayer.addChild(proj.container);
@@ -397,8 +427,63 @@ export class GameEngine {
           this.map.obstacles,
           this.map.width,
           this.map.height,
-          enemyPositions
+          shooterEntitiesWithPlayer
         );
+
+        // Solid hull collision resolution between Player and Shooter (Blue Ship)
+        const dx = this.player.x - enemy.x;
+        const dy = this.player.y - enemy.y;
+        const dist = Math.hypot(dx, dy);
+        const minDist = this.player.radius + enemy.radius;
+
+        if (dist < minDist && dist > 0.001) {
+          const overlap = minDist - dist;
+          const nx = dx / dist;
+          const ny = dy / dist;
+
+          const pPushX = this.player.x + nx * overlap * 0.55;
+          const pPushY = this.player.y + ny * overlap * 0.55;
+          const ePushX = enemy.x - nx * overlap * 0.55;
+          const ePushY = enemy.y - ny * overlap * 0.55;
+
+          const pBlocked = this.map.isPointBlocked(pPushX, pPushY, this.player.radius);
+          const eBlocked = this.map.isPointBlocked(ePushX, ePushY, enemy.radius);
+
+          if (!pBlocked && !eBlocked) {
+            this.player.x = pPushX;
+            this.player.y = pPushY;
+            enemy.x = ePushX;
+            enemy.y = ePushY;
+          } else if (!pBlocked && eBlocked) {
+            const fullPx = this.player.x + nx * overlap;
+            const fullPy = this.player.y + ny * overlap;
+            if (!this.map.isPointBlocked(fullPx, fullPy, this.player.radius)) {
+              this.player.x = fullPx;
+              this.player.y = fullPy;
+            }
+          } else if (pBlocked && !eBlocked) {
+            const fullEx = enemy.x - nx * overlap;
+            const fullEy = enemy.y - ny * overlap;
+            if (!this.map.isPointBlocked(fullEx, fullEy, enemy.radius)) {
+              enemy.x = fullEx;
+              enemy.y = fullEy;
+            }
+          }
+
+          // Impede forward velocities upon collision
+          this.player.speed = Math.max(0, this.player.speed * 0.5);
+          enemy.speed = Math.max(0, enemy.speed * 0.5);
+
+          // Audio and wood splinter VFX on collision
+          const now = performance.now();
+          if (now - this.lastShipCollisionTime > 300) {
+            this.lastShipCollisionTime = now;
+            this.audio.playSfx('ship_collision');
+            const midX = (this.player.x + enemy.x) / 2;
+            const midY = (this.player.y + enemy.y) / 2;
+            this.particleMgr?.spawnWoodSplinters(midX, midY);
+          }
+        }
       }
     }
 
