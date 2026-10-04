@@ -64,6 +64,9 @@ test.describe('Visual Regression Tests', () => {
       const artifactDir = 'C:/Users/caieb/.gemini/antigravity/brain/9807d908-8a64-4337-90a8-9e22612ebd0a';
       await page.screenshot({ path: `${artifactDir}/mobile-controls-active-joystick.png` });
 
+      const cannons = page.getByRole('button', { name: 'Fire Frontal Cannon' }).locator('../..');
+      await cannons.screenshot({ path: `${artifactDir}/mobile-cannons-cluster.png` });
+
       await page.mouse.up();
     }
   });

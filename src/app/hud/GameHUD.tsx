@@ -65,16 +65,9 @@ const RoundControlButton: React.FC<RoundControlButtonProps> = ({
 
   const sizeStyles = {
     xs: 'w-8 h-8 sm:w-9 sm:h-9',
-    sm: 'w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11',
+    sm: 'w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12',
     md: 'w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14',
-    lg: 'w-13 h-13 sm:w-14 sm:h-14 md:w-16 md:h-16',
-  }[size];
-
-  const iconSizes = {
-    xs: 'w-4 h-4 sm:w-4.5 sm:h-4.5',
-    sm: 'w-4.5 h-4.5 sm:w-5 sm:h-5 md:w-5.5 md:h-5.5',
-    md: 'w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8',
-    lg: 'w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9',
+    lg: 'w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16',
   }[size];
 
   return (
@@ -98,19 +91,24 @@ const RoundControlButton: React.FC<RoundControlButtonProps> = ({
         className={`relative ${sizeStyles} flex items-center justify-center cursor-pointer transition-transform active:scale-95 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]`}
         aria-label={ariaLabel}
       >
+        {/* Outer wooden circular frame */}
         <img
           src={frameSrc}
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
         />
-        <img
-          src={icon}
-          alt={alt}
-          className={`relative z-10 ${iconSizes} object-contain transition-transform ${
-            isPressed ? 'translate-y-0.5 scale-95' : ''
-          }`}
-        />
+
+        {/* Inner plate area: strictly bounded within the dark blue circular plate (54% of button) */}
+        <div className="relative z-10 w-[54%] h-[54%] rounded-full overflow-hidden flex items-center justify-center pointer-events-none select-none">
+          <img
+            src={icon}
+            alt={alt}
+            className={`w-[86%] h-[86%] object-contain transition-transform filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] ${
+              isPressed ? 'translate-y-0.5 scale-95' : ''
+            }`}
+          />
+        </div>
       </button>
       {keyLabel && (
         <span className="text-[10px] sm:text-xs font-mono font-bold text-stone-200 bg-black/75 px-2 py-0.5 rounded border border-amber-900/60 shadow-md mt-1 pointer-events-none">
@@ -310,7 +308,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             <RoundControlButton
               icon="/assets/png/retina/ui/controls/icon_fire_front.png"
               alt="Bow Cannon"
-              size={isMobileLandscape ? 'sm' : isMobilePortrait ? 'sm' : 'lg'}
+              size={isMobileLandscape ? 'sm' : isMobilePortrait ? 'md' : 'lg'}
               className="mb-1"
               onPointerDown={() => onVirtualInput('fireFront', true)}
               onPointerUp={() => onVirtualInput('fireFront', false)}
@@ -322,7 +320,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               <RoundControlButton
                 icon="/assets/png/retina/ui/controls/icon_fire_left.png"
                 alt="Port Broadside"
-                size={isMobileLandscape ? 'sm' : isMobilePortrait ? 'sm' : 'lg'}
+                size={isMobileLandscape ? 'sm' : isMobilePortrait ? 'md' : 'lg'}
                 onPointerDown={() => onVirtualInput('fireLeft', true)}
                 onPointerUp={() => onVirtualInput('fireLeft', false)}
                 onPointerLeave={() => onVirtualInput('fireLeft', false)}
@@ -331,7 +329,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               <RoundControlButton
                 icon="/assets/png/retina/ui/controls/icon_fire_right.png"
                 alt="Starboard Broadside"
-                size={isMobileLandscape ? 'sm' : isMobilePortrait ? 'sm' : 'lg'}
+                size={isMobileLandscape ? 'sm' : isMobilePortrait ? 'md' : 'lg'}
                 onPointerDown={() => onVirtualInput('fireRight', true)}
                 onPointerUp={() => onVirtualInput('fireRight', false)}
                 onPointerLeave={() => onVirtualInput('fireRight', false)}

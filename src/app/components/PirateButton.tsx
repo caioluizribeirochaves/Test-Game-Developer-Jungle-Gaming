@@ -194,14 +194,16 @@ export const PirateButton: React.FC<PirateButtonProps> = ({
           className="absolute inset-0 w-full h-full object-contain pointer-events-none"
         />
         {iconSrc ? (
-          <img
-            src={iconSrc}
-            alt=""
-            aria-hidden="true"
-            className={`relative z-10 w-[58%] h-[58%] object-contain pointer-events-none filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] ${
-              isPressed ? 'translate-y-0.5 scale-95' : ''
-            }`}
-          />
+          <div className="relative z-10 w-[54%] h-[54%] rounded-full overflow-hidden flex items-center justify-center pointer-events-none">
+            <img
+              src={iconSrc}
+              alt=""
+              aria-hidden="true"
+              className={`w-[86%] h-[86%] object-contain pointer-events-none filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] ${
+                isPressed ? 'translate-y-0.5 scale-95' : ''
+              }`}
+            />
+          </div>
         ) : (
           <span
             className={`relative z-10 font-serif font-black text-[#fef3c7] drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] ${
