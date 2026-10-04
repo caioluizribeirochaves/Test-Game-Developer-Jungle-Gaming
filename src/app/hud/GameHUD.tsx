@@ -1,5 +1,23 @@
-import React from 'react';
-import { PlayerInputState } from '@/engine/entities/PlayerShip';
+import React, { useState, useEffect, useCallback } from 'react';
+import { PlayerInputState, PlayerActionKey } from '@/engine/entities/PlayerShip';
+import { VirtualJoystick } from './VirtualJoystick';
+
+export const checkIsMobile = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  if (
+    window.location.search.includes('mobile=true') ||
+    window.location.search.includes('controls=mobile')
+  ) {
+    return true;
+  }
+  const ua = navigator.userAgent || '';
+  const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobi/i.test(ua);
+  const hasTouch =
+    (typeof navigator.maxTouchPoints !== 'undefined' && navigator.maxTouchPoints > 0) ||
+    'ontouchstart' in window;
+  const isNarrowScreen = window.innerWidth <= 840;
+  return isMobileUA || (hasTouch && isNarrowScreen) || window.innerWidth <= 768;
+};
 
 export interface GameHUDProps {
   health: number;
@@ -7,7 +25,8 @@ export interface GameHUDProps {
   score: number;
   timeRemaining: number;
   onTogglePause: () => void;
-  onVirtualInput: (action: keyof PlayerInputState, value: boolean) => void;
+  onVirtualInput: (action: PlayerActionKey, value: boolean) => void;
+  onJoystickInput?: (x: number, y: number, active: boolean) => void;
 }
 
 interface RoundControlButtonProps {
@@ -107,7 +126,23 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   timeRemaining,
   onTogglePause,
   onVirtualInput,
+  onJoystickInput,
 }) => {
+  const [isMobile, setIsMobile] = useState(checkIsMobile);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(checkIsMobile());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleJoystickChange = useCallback(
+    (x: number, y: number, active: boolean) => {
+      onJoystickInput?.(x, y, active);
+    },
+    [onJoystickInput]
+  );
+
   const minutes = Math.floor(timeRemaining / 60);
   const seconds = timeRemaining % 60;
   const timeFormatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
@@ -221,88 +256,135 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         </div>
       </div>
 
-      {/* Bottom Virtual Touch Controls with Key Hint Badges */}
-      <div className="w-full flex items-end justify-between pb-2">
-        {/* Left Side: Steering and Movement Controls */}
-        <div className="flex items-end gap-2 sm:gap-3 pointer-events-auto">
-          {/* Turn Left */}
-          <RoundControlButton
-            icon="/assets/png/retina/ui/controls/icon_turn_left.png"
-            alt="Turn Left"
-            keyLabel="A"
-            size="md"
-            onPointerDown={() => onVirtualInput('turnLeft', true)}
-            onPointerUp={() => onVirtualInput('turnLeft', false)}
-            onPointerLeave={() => onVirtualInput('turnLeft', false)}
-            ariaLabel="Turn Left"
-          />
+      {/* Bottom Controls */}
+      {isMobile ? (
+        /* Mobile Controls: Virtual Joystick on Left (Image 2) & Triangular Cannon Buttons on Right (Image 1) */
+        <div className="w-full flex items-end justify-between pb-2 px-1 sm:px-3">
+          {/* Left: Virtual Joystick (Image 2) */}
+          <div className="pointer-events-auto filter drop-shadow-[0_6px_14px_rgba(0,0,0,0.7)]">
+            <VirtualJoystick onChange={handleJoystickChange} size={142} knobSize={60} />
+          </div>
 
-          {/* Move Forward */}
-          <RoundControlButton
-            icon="/assets/png/retina/ui/controls/icon_forward.png"
-            alt="Move Forward"
-            keyLabel="W"
-            size="lg"
-            className="-mb-2"
-            onPointerDown={() => onVirtualInput('forward', true)}
-            onPointerUp={() => onVirtualInput('forward', false)}
-            onPointerLeave={() => onVirtualInput('forward', false)}
-            ariaLabel="Move Forward"
-          />
-
-          {/* Turn Right */}
-          <RoundControlButton
-            icon="/assets/png/retina/ui/controls/icon_turn_right.png"
-            alt="Turn Right"
-            keyLabel="D"
-            size="md"
-            onPointerDown={() => onVirtualInput('turnRight', true)}
-            onPointerUp={() => onVirtualInput('turnRight', false)}
-            onPointerLeave={() => onVirtualInput('turnRight', false)}
-            ariaLabel="Turn Right"
-          />
+          {/* Right: Triangular Cannon Fire Buttons Cluster (Image 1) */}
+          <div className="flex flex-col items-center pointer-events-auto select-none filter drop-shadow-[0_6px_14px_rgba(0,0,0,0.7)]">
+            {/* Top Apex: Bow Cannon (Front) */}
+            <RoundControlButton
+              icon="/assets/png/retina/ui/controls/icon_fire_front.png"
+              alt="Bow Cannon"
+              size="lg"
+              className="mb-1.5"
+              onPointerDown={() => onVirtualInput('fireFront', true)}
+              onPointerUp={() => onVirtualInput('fireFront', false)}
+              onPointerLeave={() => onVirtualInput('fireFront', false)}
+              ariaLabel="Fire Frontal Cannon"
+            />
+            {/* Bottom Row: Port Broadside (Left) & Starboard Broadside (Right) */}
+            <div className="flex items-center gap-4 sm:gap-5">
+              <RoundControlButton
+                icon="/assets/png/retina/ui/controls/icon_fire_left.png"
+                alt="Port Broadside"
+                size="lg"
+                onPointerDown={() => onVirtualInput('fireLeft', true)}
+                onPointerUp={() => onVirtualInput('fireLeft', false)}
+                onPointerLeave={() => onVirtualInput('fireLeft', false)}
+                ariaLabel="Fire Port Broadside"
+              />
+              <RoundControlButton
+                icon="/assets/png/retina/ui/controls/icon_fire_right.png"
+                alt="Starboard Broadside"
+                size="lg"
+                onPointerDown={() => onVirtualInput('fireRight', true)}
+                onPointerUp={() => onVirtualInput('fireRight', false)}
+                onPointerLeave={() => onVirtualInput('fireRight', false)}
+                ariaLabel="Fire Starboard Broadside"
+              />
+            </div>
+          </div>
         </div>
+      ) : (
+        /* Desktop Keyboard Controls with Shortcut Badges */
+        <div className="w-full flex items-end justify-between pb-2">
+          {/* Left Side: Steering and Movement Controls */}
+          <div className="flex items-end gap-2 sm:gap-3 pointer-events-auto">
+            {/* Turn Left */}
+            <RoundControlButton
+              icon="/assets/png/retina/ui/controls/icon_turn_left.png"
+              alt="Turn Left"
+              keyLabel="A"
+              size="md"
+              onPointerDown={() => onVirtualInput('turnLeft', true)}
+              onPointerUp={() => onVirtualInput('turnLeft', false)}
+              onPointerLeave={() => onVirtualInput('turnLeft', false)}
+              ariaLabel="Turn Left"
+            />
 
-        {/* Right Side: Attack Cannons with Key Hint Badges */}
-        <div className="flex items-end gap-2 sm:gap-3 pointer-events-auto">
-          {/* Port Broadside (Left) */}
-          <RoundControlButton
-            icon="/assets/png/retina/ui/controls/icon_fire_left.png"
-            alt="Port Broadside"
-            keyLabel="Q"
-            size="md"
-            onPointerDown={() => onVirtualInput('fireLeft', true)}
-            onPointerUp={() => onVirtualInput('fireLeft', false)}
-            onPointerLeave={() => onVirtualInput('fireLeft', false)}
-            ariaLabel="Fire Port Broadside"
-          />
+            {/* Move Forward */}
+            <RoundControlButton
+              icon="/assets/png/retina/ui/controls/icon_forward.png"
+              alt="Move Forward"
+              keyLabel="W"
+              size="lg"
+              className="-mb-2"
+              onPointerDown={() => onVirtualInput('forward', true)}
+              onPointerUp={() => onVirtualInput('forward', false)}
+              onPointerLeave={() => onVirtualInput('forward', false)}
+              ariaLabel="Move Forward"
+            />
 
-          {/* Bow Cannon (Front) */}
-          <RoundControlButton
-            icon="/assets/png/retina/ui/controls/icon_fire_front.png"
-            alt="Bow Cannon"
-            keyLabel="Space"
-            size="lg"
-            className="-mb-2"
-            onPointerDown={() => onVirtualInput('fireFront', true)}
-            onPointerUp={() => onVirtualInput('fireFront', false)}
-            onPointerLeave={() => onVirtualInput('fireFront', false)}
-            ariaLabel="Fire Frontal Cannon"
-          />
+            {/* Turn Right */}
+            <RoundControlButton
+              icon="/assets/png/retina/ui/controls/icon_turn_right.png"
+              alt="Turn Right"
+              keyLabel="D"
+              size="md"
+              onPointerDown={() => onVirtualInput('turnRight', true)}
+              onPointerUp={() => onVirtualInput('turnRight', false)}
+              onPointerLeave={() => onVirtualInput('turnRight', false)}
+              ariaLabel="Turn Right"
+            />
+          </div>
 
-          {/* Starboard Broadside (Right) */}
-          <RoundControlButton
-            icon="/assets/png/retina/ui/controls/icon_fire_right.png"
-            alt="Starboard Broadside"
-            keyLabel="E"
-            size="md"
-            onPointerDown={() => onVirtualInput('fireRight', true)}
-            onPointerUp={() => onVirtualInput('fireRight', false)}
-            onPointerLeave={() => onVirtualInput('fireRight', false)}
-            ariaLabel="Fire Starboard Broadside"
-          />
+          {/* Right Side: Attack Cannons with Key Hint Badges */}
+          <div className="flex items-end gap-2 sm:gap-3 pointer-events-auto">
+            {/* Port Broadside (Left) */}
+            <RoundControlButton
+              icon="/assets/png/retina/ui/controls/icon_fire_left.png"
+              alt="Port Broadside"
+              keyLabel="Q"
+              size="md"
+              onPointerDown={() => onVirtualInput('fireLeft', true)}
+              onPointerUp={() => onVirtualInput('fireLeft', false)}
+              onPointerLeave={() => onVirtualInput('fireLeft', false)}
+              ariaLabel="Fire Port Broadside"
+            />
+
+            {/* Bow Cannon (Front) */}
+            <RoundControlButton
+              icon="/assets/png/retina/ui/controls/icon_fire_front.png"
+              alt="Bow Cannon"
+              keyLabel="Space"
+              size="lg"
+              className="-mb-2"
+              onPointerDown={() => onVirtualInput('fireFront', true)}
+              onPointerUp={() => onVirtualInput('fireFront', false)}
+              onPointerLeave={() => onVirtualInput('fireFront', false)}
+              ariaLabel="Fire Frontal Cannon"
+            />
+
+            {/* Starboard Broadside (Right) */}
+            <RoundControlButton
+              icon="/assets/png/retina/ui/controls/icon_fire_right.png"
+              alt="Starboard Broadside"
+              keyLabel="E"
+              size="md"
+              onPointerDown={() => onVirtualInput('fireRight', true)}
+              onPointerUp={() => onVirtualInput('fireRight', false)}
+              onPointerLeave={() => onVirtualInput('fireRight', false)}
+              ariaLabel="Fire Starboard Broadside"
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -6,7 +6,7 @@ import { ParticleManager } from '../vfx/ParticleManager';
 import { DamageTextManager } from '../vfx/DamageTextManager';
 import { AudioManager } from '../audio/AudioManager';
 import { InputManager } from './InputManager';
-import { PlayerShip, PlayerInputState } from '../entities/PlayerShip';
+import { PlayerShip, PlayerInputState, PlayerActionKey } from '../entities/PlayerShip';
 import { ChaserEnemy } from '../entities/ChaserEnemy';
 import { ShooterEnemy } from '../entities/ShooterEnemy';
 import { Projectile } from '../entities/Projectile';
@@ -240,8 +240,12 @@ export class GameEngine {
     }
   }
 
-  public setVirtualInput(action: keyof PlayerInputState, value: boolean): void {
+  public setVirtualInput(action: PlayerActionKey, value: boolean): void {
     this.input.setVirtual(action, value);
+  }
+
+  public setJoystickInput(x: number, y: number, active: boolean): void {
+    this.input.setJoystick(x, y, active);
   }
 
   private update(): void {

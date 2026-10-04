@@ -3,6 +3,14 @@ import { AssetLoader } from '../core/AssetLoader';
 import { GameplayBalanceConfig } from '../config/gameConfig';
 import { Projectile } from './Projectile';
 
+export type PlayerActionKey =
+  | 'forward'
+  | 'turnLeft'
+  | 'turnRight'
+  | 'fireFront'
+  | 'fireLeft'
+  | 'fireRight';
+
 export interface PlayerInputState {
   forward: boolean;
   turnLeft: boolean;
@@ -10,6 +18,9 @@ export interface PlayerInputState {
   fireFront: boolean;
   fireLeft: boolean;
   fireRight: boolean;
+  joystickActive?: boolean;
+  joystickAngle?: number;
+  joystickIntensity?: number;
 }
 
 export class PlayerShip {
@@ -130,23 +141,45 @@ export class PlayerShip {
     if (this.frontalCooldown > 0) this.frontalCooldown -= dt;
     if (this.broadsideCooldown > 0) this.broadsideCooldown -= dt;
 
-    // Turning
-    if (input.turnLeft) {
-      this.angle -= this.config.playerTurnSpeed * dt;
-    }
-    if (input.turnRight) {
-      this.angle += this.config.playerTurnSpeed * dt;
-    }
+    // Turning & Movement Handling
+    if (input.joystickActive && input.joystickIntensity !== undefined && input.joystickIntensity > 0.12) {
+      // 1. Smoothly steer towards joystick target angle
+      if (input.joystickAngle !== undefined) {
+        let angleDiff = input.joystickAngle - this.angle;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-    // Forward Acceleration & Drag
-    if (input.forward) {
+        if (Math.abs(angleDiff) > 0.04) {
+          const maxTurn = this.config.playerTurnSpeed * dt;
+          this.angle += Math.sign(angleDiff) * Math.min(Math.abs(angleDiff), maxTurn);
+        }
+      }
+
+      // 2. Accelerate forward proportional to joystick displacement
+      const targetMaxSpeed = this.config.playerMoveSpeed * Math.min(1, Math.max(0.4, input.joystickIntensity));
       this.speed = Math.min(
-        this.config.playerMoveSpeed,
+        targetMaxSpeed,
         this.speed + this.config.playerMoveSpeed * 1.8 * dt
       );
     } else {
-      this.speed *= Math.pow(this.config.playerDrag, dt * 60);
-      if (this.speed < 2) this.speed = 0;
+      // Standard keyboard or discrete button steering
+      if (input.turnLeft) {
+        this.angle -= this.config.playerTurnSpeed * dt;
+      }
+      if (input.turnRight) {
+        this.angle += this.config.playerTurnSpeed * dt;
+      }
+
+      // Forward Acceleration & Drag
+      if (input.forward) {
+        this.speed = Math.min(
+          this.config.playerMoveSpeed,
+          this.speed + this.config.playerMoveSpeed * 1.8 * dt
+        );
+      } else {
+        this.speed *= Math.pow(this.config.playerDrag, dt * 60);
+        if (this.speed < 2) this.speed = 0;
+      }
     }
 
     // Position integration with collision resolution against arena bounds & islands

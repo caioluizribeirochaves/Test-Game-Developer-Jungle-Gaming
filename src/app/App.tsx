@@ -271,6 +271,9 @@ export const App: React.FC = () => {
             onVirtualInput={(action, value) =>
               gameEngineRef.current?.setVirtualInput(action, value)
             }
+            onJoystickInput={(x, y, active) =>
+              gameEngineRef.current?.setJoystickInput(x, y, active)
+            }
           />
 
           {/* Pause Modal Overlay */}
