@@ -46,7 +46,7 @@ export const PiratePanel: React.FC<PiratePanelProps> = ({
         borderImageRepeat: 'stretch',
       }}
     >
-      <div className="relative w-full h-full p-2.5 xs:p-3 sm:p-5 flex flex-col items-center">
+      <div className="relative w-full h-full px-3 xs:px-4 sm:px-6 pt-3 sm:pt-5 pb-6 sm:pb-7 flex flex-col items-center min-h-0">
         {children}
       </div>
     </div>

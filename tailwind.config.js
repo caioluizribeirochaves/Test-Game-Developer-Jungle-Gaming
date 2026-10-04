@@ -25,6 +25,9 @@ export default {
         pirate: ['Pirata One', 'Cinzel', 'MedievalSharp', 'Georgia', 'serif'],
         ui: ['Cinzel', 'Trebuchet MS', 'sans-serif'],
       },
+      screens: {
+        'xs': '420px',
+      },
     },
   },
   plugins: [],

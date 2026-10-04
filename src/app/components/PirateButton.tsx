@@ -219,11 +219,11 @@ export const PirateButton: React.FC<PirateButtonProps> = ({
   }
 
   // Tab Styles for Navigation
-  let tabStyle = 'relative select-none font-bold uppercase transition-all duration-150 active:scale-95 px-6 py-2 rounded-lg cursor-pointer ';
+  let tabStyle = 'relative select-none font-bold uppercase transition-all duration-150 active:scale-95 px-3 xs:px-4 sm:px-6 py-1 xs:py-1.5 sm:py-2 rounded-lg cursor-pointer ';
   if (variant === 'tabActive') {
-    tabStyle += 'bg-gradient-to-b from-[#e6b756] to-[#a37119] text-[#331c04] border-2 border-[#573108] text-sm shadow-md hover:scale-[1.04] hover:drop-shadow-[0_4px_12px_rgba(223,168,55,0.45)] ';
+    tabStyle += 'bg-gradient-to-b from-[#e6b756] to-[#a37119] text-[#331c04] border-2 border-[#573108] text-[10px] xs:text-xs sm:text-sm shadow-md hover:scale-[1.04] hover:drop-shadow-[0_4px_12px_rgba(223,168,55,0.45)] ';
   } else {
-    tabStyle += 'bg-[#18283b] text-[#c5ad83] border-2 border-[#473017] text-sm hover:text-[#f7edd2] hover:border-[#875c24] hover:scale-[1.04] hover:drop-shadow-[0_4px_12px_rgba(223,168,55,0.35)] ';
+    tabStyle += 'bg-[#18283b] text-[#c5ad83] border-2 border-[#473017] text-[10px] xs:text-xs sm:text-sm hover:text-[#f7edd2] hover:border-[#875c24] hover:scale-[1.04] hover:drop-shadow-[0_4px_12px_rgba(223,168,55,0.35)] ';
   }
 
   return (

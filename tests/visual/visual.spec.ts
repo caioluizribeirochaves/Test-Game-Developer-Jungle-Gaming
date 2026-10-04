@@ -123,5 +123,52 @@ test.describe('Visual Regression Tests', () => {
     await page.waitForTimeout(1000);
     await page.screenshot({ path: `${artifactDir}/mobile-portrait-after-rotation.png` });
   });
+
+  test('should render perfectly framed Captains Log and Network Lab modals in mobile landscape', async ({ page }) => {
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.goto('/?mobile=true');
+    await expect(page.getByRole('button', { name: 'PLAY' })).toBeVisible({ timeout: 15000 });
+    const artifactDir = 'C:/Users/caieb/.gemini/antigravity/brain/9807d908-8a64-4337-90a8-9e22612ebd0a';
+
+    // Test Captain's Log in landscape
+    await page.getByRole('button', { name: 'RANKING' }).click();
+    await expect(page.getByRole('heading', { name: "CAPTAIN'S LOG" })).toBeVisible();
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: `${artifactDir}/mobile-landscape-captains-log.png` });
+    await page.getByRole('button', { name: 'MAIN MENU' }).click();
+    await expect(page.getByRole('heading', { name: "CAPTAIN'S LOG" })).not.toBeVisible();
+
+    // Test Network Lab in landscape
+    await page.getByRole('button', { name: /Network lab/i }).click();
+    await expect(page.getByRole('heading', { name: /Network & MSW Chaos/i })).toBeVisible();
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: `${artifactDir}/mobile-landscape-network-lab.png` });
+    await page.getByRole('button', { name: 'CLOSE', exact: true }).click();
+    await expect(page.getByRole('heading', { name: /Network & MSW Chaos/i })).not.toBeVisible();
+  });
+
+  test('should render perfectly framed Captains Log and Network Lab modals in mobile portrait', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/?mobile=true');
+    await expect(page.getByRole('button', { name: 'PLAY' })).toBeVisible({ timeout: 15000 });
+    const artifactDir = 'C:/Users/caieb/.gemini/antigravity/brain/9807d908-8a64-4337-90a8-9e22612ebd0a';
+
+    // Test Captain's Log in portrait
+    await page.getByRole('button', { name: 'RANKING' }).click();
+    await expect(page.getByRole('heading', { name: "CAPTAIN'S LOG" })).toBeVisible();
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: `${artifactDir}/mobile-portrait-captains-log.png` });
+    await page.getByRole('button', { name: 'MAIN MENU' }).click();
+    await expect(page.getByRole('heading', { name: "CAPTAIN'S LOG" })).not.toBeVisible();
+
+    // Test Network Lab in portrait
+    await page.getByRole('button', { name: /Network lab/i }).click();
+    await expect(page.getByRole('heading', { name: /Network & MSW Chaos/i })).toBeVisible();
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: `${artifactDir}/mobile-portrait-network-lab.png` });
+    await page.getByRole('button', { name: 'CLOSE', exact: true }).click();
+    await expect(page.getByRole('heading', { name: /Network & MSW Chaos/i })).not.toBeVisible();
+  });
 });
+
 
