@@ -87,7 +87,21 @@ test.describe('Visual Regression Tests', () => {
     await expect(page.getByRole('heading', { name: 'PAUSED' })).toBeVisible();
     await page.screenshot({ path: `${artifactDir}/mobile-landscape-pause-modal.png` });
 
-    // Resume
+    // Open Controls inside PauseModal
+    await page.getByRole('button', { name: 'CONTROLS' }).click();
+    await expect(page.getByRole('heading', { name: 'CONTROLS' })).toBeVisible();
+    await page.screenshot({ path: `${artifactDir}/mobile-landscape-pause-controls.png` });
+    await page.getByRole('button', { name: 'BACK TO PAUSE' }).click();
+    await expect(page.getByRole('heading', { name: 'PAUSED' })).toBeVisible();
+
+    // Open Options inside PauseModal
+    await page.getByRole('button', { name: 'OPTIONS' }).click();
+    await expect(page.getByRole('heading', { name: 'OPTIONS' })).toBeVisible();
+    await page.screenshot({ path: `${artifactDir}/mobile-landscape-pause-options.png` });
+    await page.getByRole('button', { name: 'BACK' }).click();
+    await expect(page.getByRole('heading', { name: 'PAUSED' })).toBeVisible();
+
+    // Resume game
     await page.getByRole('button', { name: 'RESUME' }).click();
   });
 

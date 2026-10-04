@@ -150,9 +150,10 @@ export const PirateButton: React.FC<PirateButtonProps> = ({
     if (isPressed) frame = '/assets/png/retina/ui/controls/button_round_pressed.png';
     else if (isHovered) frame = '/assets/png/retina/ui/controls/button_round_hover.png';
 
-    let sizeClasses = 'w-11 h-11 sm:w-12 sm:h-12 text-lg';
+    let sizeClasses = 'w-10 h-10 sm:w-11 sm:h-11 text-base';
     if (size === 'lg') sizeClasses = 'w-14 h-14 sm:w-16 sm:h-16 text-2xl';
-    if (size === 'sm') sizeClasses = 'w-9 h-9 sm:w-10 sm:h-10 text-base';
+    if (size === 'sm') sizeClasses = 'w-8 h-8 sm:w-9 sm:h-9 text-sm';
+    if (size === 'xs') sizeClasses = 'w-7 h-7 sm:w-8 sm:h-8 text-xs';
 
     // Resolve iconic decoration inside the frame
     let iconSrc: string | null = null;
