@@ -107,45 +107,57 @@ export class AssetLoader {
       onProgress?.(this.loadProgress);
 
       // 4. Load common tiles, backgrounds, and HUD assets
+      // 4. Determine resolution format: desktop/retina vs mobile/default
+      const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+      const isRetina = !isMobile || (typeof window !== 'undefined' && (window.devicePixelRatio || 1) > 1.2);
+      const resPrefix = isRetina ? 'retina' : 'default';
+
       const additionalAssets = [
         { name: 'ui_scene_background', url: '/assets/ui_scene_background.png' },
         { name: 'logo_jungle_gaming', url: '/assets/logo_jungle_gaming.svg' },
-        { name: 'health_frame', url: '/assets/png/retina/ui/hud/health_frame.png' },
-        { name: 'health_fill_green', url: '/assets/png/retina/ui/hud/health_fill_green.png' },
-        { name: 'health_fill_amber', url: '/assets/png/retina/ui/hud/health_fill_amber.png' },
-        { name: 'health_fill_red', url: '/assets/png/retina/ui/hud/health_fill_red.png' },
-        { name: 'enemy_health_frame', url: '/assets/png/retina/ui/hud/enemy_health_frame.png' },
-        { name: 'enemy_health_fill_green', url: '/assets/png/retina/ui/hud/enemy_health_fill_green.png' },
-        { name: 'enemy_health_fill_red', url: '/assets/png/retina/ui/hud/enemy_health_fill_red.png' },
-        { name: 'counter_panel', url: '/assets/png/retina/ui/hud/counter_panel.png' },
-        { name: 'icon_heart', url: '/assets/png/retina/ui/hud/icon_heart.png' },
-        { name: 'icon_score', url: '/assets/png/retina/ui/hud/icon_score.png' },
-        { name: 'icon_time', url: '/assets/png/retina/ui/hud/icon_time.png' },
-        { name: 'water_tile_73', url: '/assets/png/retina/tiles/tile_73.png' },
-        { name: 'crew_1', url: '/assets/png/retina/ship_parts/crew_1.png' },
-        { name: 'crew_2', url: '/assets/png/retina/ship_parts/crew_2.png' },
-        { name: 'crew_3', url: '/assets/png/retina/ship_parts/crew_3.png' },
-        { name: 'crew_4', url: '/assets/png/retina/ship_parts/crew_4.png' },
-        { name: 'crew_5', url: '/assets/png/retina/ship_parts/crew_5.png' },
-        { name: 'crew_6', url: '/assets/png/retina/ship_parts/crew_6.png' },
+        { name: 'health_frame', url: `/assets/png/${resPrefix}/ui/hud/health_frame.png`, fallbackUrl: '/assets/png/default/ui/hud/health_frame.png' },
+        { name: 'health_fill_green', url: `/assets/png/${resPrefix}/ui/hud/health_fill_green.png`, fallbackUrl: '/assets/png/default/ui/hud/health_fill_green.png' },
+        { name: 'health_fill_amber', url: `/assets/png/${resPrefix}/ui/hud/health_fill_amber.png`, fallbackUrl: '/assets/png/default/ui/hud/health_fill_amber.png' },
+        { name: 'health_fill_red', url: `/assets/png/${resPrefix}/ui/hud/health_fill_red.png`, fallbackUrl: '/assets/png/default/ui/hud/health_fill_red.png' },
+        { name: 'enemy_health_frame', url: `/assets/png/${resPrefix}/ui/hud/enemy_health_frame.png`, fallbackUrl: '/assets/png/default/ui/hud/enemy_health_frame.png' },
+        { name: 'enemy_health_fill_green', url: `/assets/png/${resPrefix}/ui/hud/enemy_health_fill_green.png`, fallbackUrl: '/assets/png/default/ui/hud/enemy_health_fill_green.png' },
+        { name: 'enemy_health_fill_red', url: `/assets/png/${resPrefix}/ui/hud/enemy_health_fill_red.png`, fallbackUrl: '/assets/png/default/ui/hud/enemy_health_fill_red.png' },
+        { name: 'counter_panel', url: `/assets/png/${resPrefix}/ui/hud/counter_panel.png`, fallbackUrl: '/assets/png/default/ui/hud/counter_panel.png' },
+        { name: 'icon_heart', url: `/assets/png/${resPrefix}/ui/hud/icon_heart.png`, fallbackUrl: '/assets/png/default/ui/hud/icon_heart.png' },
+        { name: 'icon_score', url: `/assets/png/${resPrefix}/ui/hud/icon_score.png`, fallbackUrl: '/assets/png/default/ui/hud/icon_score.png' },
+        { name: 'icon_time', url: `/assets/png/${resPrefix}/ui/hud/icon_time.png`, fallbackUrl: '/assets/png/default/ui/hud/icon_time.png' },
+        { name: 'water_tile_73', url: `/assets/png/${resPrefix}/tiles/tile_73.png`, fallbackUrl: '/assets/png/default/tiles/tile_73.png' },
+        { name: 'crew_1', url: `/assets/png/${resPrefix}/ship_parts/crew_1.png`, fallbackUrl: '/assets/png/default/ship_parts/crew_1.png' },
+        { name: 'crew_2', url: `/assets/png/${resPrefix}/ship_parts/crew_2.png`, fallbackUrl: '/assets/png/default/ship_parts/crew_2.png' },
+        { name: 'crew_3', url: `/assets/png/${resPrefix}/ship_parts/crew_3.png`, fallbackUrl: '/assets/png/default/ship_parts/crew_3.png' },
+        { name: 'crew_4', url: `/assets/png/${resPrefix}/ship_parts/crew_4.png`, fallbackUrl: '/assets/png/default/ship_parts/crew_4.png' },
+        { name: 'crew_5', url: `/assets/png/${resPrefix}/ship_parts/crew_5.png`, fallbackUrl: '/assets/png/default/ship_parts/crew_5.png' },
+        { name: 'crew_6', url: `/assets/png/${resPrefix}/ship_parts/crew_6.png`, fallbackUrl: '/assets/png/default/ship_parts/crew_6.png' },
       ];
 
       for (const asset of additionalAssets) {
         try {
           const loadedTex = await Assets.load(asset.url);
           this.textures.set(asset.name, loadedTex);
-        } catch {}
+        } catch {
+          if (asset.fallbackUrl) {
+            try {
+              const fallbackTex = await Assets.load(asset.fallbackUrl);
+              this.textures.set(asset.name, fallbackTex);
+            } catch {}
+          }
+        }
       }
 
-      // 5. Preload retina tilesheet (16 columns x 6 rows of 128x128 retina tiles = 96 tiles)
+      // 5. Preload tilesheet (16 columns x 6 rows of 96 tiles: 128x128 retina or 64x64 default)
       try {
         let tilesBaseTex: Texture | null = null;
-        let tileSize = 128;
+        let actualTileSize = isRetina ? 128 : 64;
         try {
-          tilesBaseTex = await Assets.load('/assets/tilesheet/tiles_sheet_retina.png');
+          tilesBaseTex = await Assets.load(isRetina ? '/assets/tilesheet/tiles_sheet_retina.png' : '/assets/tilesheet/tiles_sheet.png');
         } catch {
           tilesBaseTex = await Assets.load('/assets/tilesheet/tiles_sheet.png');
-          tileSize = 64;
+          actualTileSize = 64;
         }
 
         if (tilesBaseTex) {
@@ -154,7 +166,7 @@ export class AssetLoader {
           let tileIndex = 1;
           for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
-              const frame = new Rectangle(c * tileSize, r * tileSize, tileSize, tileSize);
+              const frame = new Rectangle(c * actualTileSize, r * actualTileSize, actualTileSize, actualTileSize);
               const tileTex = new Texture({
                 source: tilesBaseTex.source,
                 frame,

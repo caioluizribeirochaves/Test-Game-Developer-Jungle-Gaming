@@ -141,7 +141,7 @@ export class ShooterEnemy {
     const distance = Math.hypot(dx, dy);
     const targetAngle = Math.atan2(dy, dx);
 
-    // Tactical navigation: pursue player directly if line-of-sight is blocked by islands
+    // Tactical navigation: pursue player until combat distance, then maintain standoff range
     const hasLOS = NavGrid.getInstance(arenaWidth, arenaHeight, obstacles).hasLineOfSight(
       this.x,
       this.y,
@@ -150,20 +150,50 @@ export class ShooterEnemy {
     );
     let navTargetX = targetX;
     let navTargetY = targetY;
+    let combatSpeedMult = 1.0;
 
-    if (hasLOS && distance <= this.config.shooterDesiredDistance * 1.15) {
-      // Orbit around the player at combat distance only in clear open water
-      const orbitAngle = targetAngle + (Math.PI / 2) * this.orbitDir;
-      const desiredRange = this.config.shooterDesiredDistance;
-      const candX = targetX + Math.cos(orbitAngle) * desiredRange;
-      const candY = targetY + Math.sin(orbitAngle) * desiredRange;
+    const desiredDistance = this.config.shooterDesiredDistance;
+    const attackRange = this.config.shooterAttackRange;
 
-      if (!mapBlockedCheck(candX, candY, this.radius)) {
-        navTargetX = candX;
-        navTargetY = candY;
+    if (hasLOS) {
+      if (distance < desiredDistance * 0.75) {
+        // Player is too close: actively retreat / kite outward to open up distance
+        const awayAngle = Math.atan2(this.y - targetY, this.x - targetX);
+        const retreatX = targetX + Math.cos(awayAngle) * desiredDistance;
+        const retreatY = targetY + Math.sin(awayAngle) * desiredDistance;
+        if (!mapBlockedCheck(retreatX, retreatY, this.radius)) {
+          navTargetX = retreatX;
+          navTargetY = retreatY;
+        }
+        combatSpeedMult = 0.85;
+      } else if (distance <= attackRange) {
+        // Within combat distance: maneuver in an orbit/broadside to maintain standoff range without ramming
+        const orbitAngle = targetAngle + (Math.PI / 2) * this.orbitDir;
+        const candX = targetX + Math.cos(orbitAngle) * desiredDistance;
+        const candY = targetY + Math.sin(orbitAngle) * desiredDistance;
+
+        if (!mapBlockedCheck(candX, candY, this.radius)) {
+          navTargetX = candX;
+          navTargetY = candY;
+        } else {
+          this.orbitDir = -this.orbitDir;
+        }
+
+        // When close to ideal distance, reduce forward speed to maintain position instead of ramming
+        if (distance <= desiredDistance * 1.15) {
+          combatSpeedMult = 0.35;
+        }
       } else {
-        this.orbitDir = -this.orbitDir;
+        // Beyond attack range: chase player directly to approach into firing range
+        navTargetX = targetX;
+        navTargetY = targetY;
+        combatSpeedMult = 1.0;
       }
+    } else {
+      // Line of sight blocked by island: navigate around obstacles towards player
+      navTargetX = targetX;
+      navTargetY = targetY;
+      combatSpeedMult = 1.0;
     }
 
     const steering = ObstacleAvoidance.computeSteering(
@@ -203,8 +233,16 @@ export class ShooterEnemy {
     const maxTurn = this.config.shooterTurnSpeed * dt;
     this.angle += Math.max(-maxTurn, Math.min(maxTurn, angleDiff));
 
+    // When in combat firing range with line-of-sight, align ship towards player for firing
+    if (hasLOS && distance <= attackRange && distance >= desiredDistance * 0.7) {
+      let aimDiff = targetAngle - this.angle;
+      while (aimDiff > Math.PI) aimDiff -= Math.PI * 2;
+      while (aimDiff < -Math.PI) aimDiff += Math.PI * 2;
+      this.angle += Math.max(-maxTurn * 0.7, Math.min(maxTurn * 0.7, aimDiff * 0.5));
+    }
+
     const surfacingSpeedMult = this.spawnTimer < this.spawnDuration ? 0.3 + 0.7 * (this.spawnTimer / this.spawnDuration) : 1.0;
-    const moveSpeed = this.speed * speedMult * surfacingSpeedMult;
+    const moveSpeed = this.speed * speedMult * surfacingSpeedMult * combatSpeedMult;
     const nextX = this.x + Math.cos(this.angle) * moveSpeed * dt;
     const nextY = this.y + Math.sin(this.angle) * moveSpeed * dt;
 

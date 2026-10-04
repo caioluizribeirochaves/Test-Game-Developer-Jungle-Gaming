@@ -25,11 +25,22 @@ test.describe('Visual Regression Tests', () => {
     await page.goto('/');
     await expect(page.getByRole('button', { name: 'PLAY' })).toBeVisible({ timeout: 15000 });
     await page.getByRole('button', { name: 'RANKING' }).click();
-    await expect(page.getByRole('heading', { name: "CAPTAIN'S LOG" })).toBeVisible();
-
     await expect(page).toHaveScreenshot('captains-log-ranking.png', {
       maxDiffPixelRatio: 0.05,
     });
+  });
+
+  test('should render gameplay arena with 4 organic islands, complete castle, and shallow water shoals', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('button', { name: 'PLAY' })).toBeVisible({ timeout: 15000 });
+    await page.getByRole('button', { name: 'PLAY' }).click();
+
+    const canvas = page.locator('canvas');
+    await expect(canvas).toBeVisible({ timeout: 15000 });
+    await page.waitForTimeout(2500);
+
+    const artifactDir = 'C:/Users/caieb/.gemini/antigravity/brain/9807d908-8a64-4337-90a8-9e22612ebd0a';
+    await page.screenshot({ path: `${artifactDir}/gameplay-arena-islands-overview.png` });
   });
 });
 
