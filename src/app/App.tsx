@@ -198,23 +198,30 @@ export const App: React.FC = () => {
     <div className="relative w-full h-full min-h-full max-h-full overflow-hidden select-none bg-[#0c1724] flex flex-col">
       {/* 1. Loading Screen */}
       {screen === 'LOADING' && (
-        <div
-          className="w-full h-full flex flex-col items-center justify-center bg-cover bg-center"
-          style={{ backgroundImage: 'url(/assets/ui_scene_background.png)' }}
-        >
-          <PiratePanel size="sm">
-            <h1 className="text-2xl font-black text-[#fce79f] tracking-wider mb-2">
+        <div className="relative w-full h-full min-h-full max-h-full flex flex-col items-center justify-center overflow-hidden p-2 sm:p-4 select-none bg-[#0c1724]">
+          {/* Subtle darkened and slightly blurred background scene for high contrast focus */}
+          <div
+            className="absolute inset-0 bg-cover bg-center filter blur-[2.5px] scale-105 pointer-events-none"
+            style={{ backgroundImage: 'url(/assets/ui_scene_background.png)' }}
+          />
+          {/* Slight dark overlay for contrast */}
+          <div className="absolute inset-0 bg-black/35 pointer-events-none" />
+
+          <PiratePanel size="sm" className="my-auto z-10 max-w-[340px] xs:max-w-[380px]">
+            <h1 className="text-lg xs:text-xl sm:text-2xl font-black text-[#fce79f] tracking-wider mb-1 sm:mb-2 text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
               HOISTING SAILS...
             </h1>
-            <p className="text-xs text-[#c5ad83] mb-6">Preparing pirate waters and cannons</p>
+            <p className="text-[10px] xs:text-xs text-[#c5ad83] mb-4 sm:mb-6 text-center font-medium tracking-wide">
+              Preparing pirate waters and cannons
+            </p>
             {/* Loading Bar */}
-            <div className="w-full h-6 bg-[#122438] rounded-full border-2 border-[#9b6f1e] p-0.5 overflow-hidden shadow-inner">
+            <div className="w-full h-5 xs:h-6 bg-[#122438] rounded-full border-2 border-[#9b6f1e] p-0.5 overflow-hidden shadow-inner">
               <div
                 className="h-full bg-gradient-to-r from-[#dfa837] to-[#fce79f] rounded-full transition-all duration-300"
                 style={{ width: `${Math.round(loadProgress * 100)}%` }}
               />
             </div>
-            <span className="text-xs text-amber-200 mt-2 font-mono font-bold">
+            <span className="text-[11px] xs:text-xs text-amber-200 mt-2 font-mono font-bold">
               {Math.round(loadProgress * 100)}%
             </span>
           </PiratePanel>
