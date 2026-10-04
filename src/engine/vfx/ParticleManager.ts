@@ -33,11 +33,22 @@ export interface EjectedCrew {
   baseY: number;
 }
 
+export interface WaterRippleRing {
+  gfx: Graphics;
+  x: number;
+  y: number;
+  startRadius: number;
+  maxRadius: number;
+  elapsed: number;
+  duration: number;
+}
+
 export class ParticleManager {
   private container: Container;
   private particles: Particle[] = [];
   private explosions: AnimatedExplosion[] = [];
   private crewMembers: EjectedCrew[] = [];
+  private waterRipples: WaterRippleRing[] = [];
 
   constructor(parent: Container) {
     this.container = new Container();
@@ -145,6 +156,37 @@ export class ParticleManager {
       if (timeLeft < 1.2) {
         crew.sprite.alpha = Math.max(0, timeLeft / 1.2);
       }
+    }
+
+    // 4. Update water ripple rings (organic surfacing effect matching Image 4)
+    for (let i = this.waterRipples.length - 1; i >= 0; i--) {
+      const r = this.waterRipples[i]!;
+      r.elapsed += dt;
+
+      if (r.elapsed < 0) {
+        r.gfx.visible = false;
+        continue;
+      }
+      r.gfx.visible = true;
+
+      const progress = r.elapsed / r.duration;
+      if (progress >= 1) {
+        this.container.removeChild(r.gfx);
+        r.gfx.destroy();
+        this.waterRipples.splice(i, 1);
+        continue;
+      }
+
+      const curRadius = r.startRadius + (r.maxRadius - r.startRadius) * Math.sqrt(progress);
+      const alpha = Math.sin((1 - progress) * Math.PI * 0.5) * 0.85;
+
+      r.gfx.clear();
+      // Outer bright white foam ring (matching media_1791079197664.png)
+      r.gfx.circle(r.x, r.y, curRadius);
+      r.gfx.stroke({ width: 3.5 * (1 - progress * 0.4), color: 0xffffff, alpha });
+      // Inner soft turquoise glow ring
+      r.gfx.circle(r.x, r.y, Math.max(1, curRadius - 3.5));
+      r.gfx.stroke({ width: 2.0, color: 0xa5f3fc, alpha: alpha * 0.6 });
     }
   }
 
@@ -352,6 +394,25 @@ export class ParticleManager {
     }
   }
 
+  /**
+   * Spawns concentric organic water ripples as ships surface (matching Image 4).
+   */
+  public spawnSurfacingRipples(x: number, y: number, count: number = 3): void {
+    for (let i = 0; i < count; i++) {
+      const gfx = new Graphics();
+      this.container.addChild(gfx);
+      this.waterRipples.push({
+        gfx,
+        x,
+        y,
+        startRadius: 16 + i * 8,
+        maxRadius: 54 + i * 18,
+        elapsed: -i * 0.22, // Staggered concentric ripple pulses
+        duration: 1.15,
+      });
+    }
+  }
+
   public clear(): void {
     for (const p of this.particles) {
       this.container.removeChild(p.sprite);
@@ -370,5 +431,11 @@ export class ParticleManager {
       crew.sprite.destroy();
     }
     this.crewMembers = [];
+
+    for (const r of this.waterRipples) {
+      this.container.removeChild(r.gfx);
+      r.gfx.destroy();
+    }
+    this.waterRipples = [];
   }
 }

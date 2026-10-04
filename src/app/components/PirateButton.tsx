@@ -99,18 +99,28 @@ export const PirateButton: React.FC<PirateButtonProps> = ({
         onMouseDown={() => setIsPressed(true)}
         onMouseUp={() => setIsPressed(false)}
         disabled={disabled}
-        className={`relative flex items-center justify-center select-none cursor-pointer transition-transform active:scale-95 disabled:opacity-50 disabled:pointer-events-none filter drop-shadow-[0_3px_8px_rgba(0,0,0,0.5)] ${sizeClasses} ${className}`}
+        className={`relative flex items-center justify-center select-none cursor-pointer transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:pointer-events-none ${
+          isHovered
+            ? 'scale-[1.04] filter drop-shadow-[0_4px_12px_rgba(223,168,55,0.45)] brightness-105'
+            : 'filter drop-shadow-[0_3px_8px_rgba(0,0,0,0.5)]'
+        } ${sizeClasses} ${className}`}
         {...props}
       >
         <img
           src={frame}
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+          className={`absolute inset-0 w-full h-full object-fill pointer-events-none transition-all ${
+            isHovered ? 'brightness-110' : ''
+          }`}
         />
         <span
-          className={`relative z-10 px-3 max-w-[84%] text-center font-serif font-black tracking-normal text-[#f5e6be] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] whitespace-nowrap overflow-hidden text-ellipsis ${
-            isPressed ? 'translate-y-0.5 text-white' : ''
+          className={`relative z-10 px-3 max-w-[84%] text-center font-serif font-black tracking-normal uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] whitespace-nowrap overflow-hidden text-ellipsis transition-colors ${
+            isPressed
+              ? 'translate-y-0.5 text-white'
+              : isHovered
+              ? 'text-[#fce79f]'
+              : 'text-[#f5e6be]'
           }`}
         >
           {children}

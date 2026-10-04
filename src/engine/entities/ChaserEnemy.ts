@@ -32,6 +32,9 @@ export class ChaserEnemy {
   private healthFillSprite: Sprite;
   private healthFillMask: Graphics;
 
+  public spawnTimer: number = 0;
+  public readonly spawnDuration: number = 1.2;
+
   constructor(x: number, y: number, config: GameplayBalanceConfig, parent: Container) {
     this.x = x;
     this.y = y;
@@ -48,15 +51,16 @@ export class ChaserEnemy {
     // 1. Dynamic Ship Shadow cast on the water (matching media_1791068554369.png)
     this.shadowSprite = new Sprite(assets.getTexture(this.stageSprites[0]!));
     this.shadowSprite.anchor.set(0.5);
-    this.shadowSprite.scale.set(0.9);
+    this.shadowSprite.scale.set(0.45);
     this.shadowSprite.tint = 0x071e2c;
-    this.shadowSprite.alpha = 0.36;
+    this.shadowSprite.alpha = 0;
     this.container.addChild(this.shadowSprite);
 
-    // 2. Chaser Ship Sprite (Red sails: Kamikaze Chaser)
+    // 2. Chaser Ship Sprite (Surfacing spawn animation)
     this.sprite = new Sprite(assets.getTexture(this.stageSprites[0]!));
     this.sprite.anchor.set(0.5);
-    this.sprite.scale.set(0.9);
+    this.sprite.scale.set(0.45);
+    this.sprite.alpha = 0.15;
     this.container.addChild(this.sprite);
 
     // 3. Multi-flame billowing effect on sails & deck (matching media_1791068148655.png)
@@ -137,6 +141,19 @@ export class ChaserEnemy {
     const desiredAngle = steering.desiredAngle;
     const speedMult = steering.speedMultiplier;
 
+    // Surfacing spawn animation (gradual organic emergence matching Image 4)
+    if (this.spawnTimer < this.spawnDuration) {
+      this.spawnTimer += dt;
+      const progress = Math.min(1, this.spawnTimer / this.spawnDuration);
+      const ease = 1 - Math.pow(1 - progress, 2);
+      const curScale = 0.45 + 0.45 * ease;
+      this.sprite.scale.set(curScale);
+      this.sprite.alpha = 0.15 + 0.85 * ease;
+      this.shadowSprite.scale.set(curScale);
+      this.shadowSprite.alpha = 0.36 * ease;
+      this.healthBarContainer.alpha = ease;
+    }
+
     // Smooth turn towards desired angle
     let angleDiff = desiredAngle - this.angle;
     while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
@@ -146,8 +163,9 @@ export class ChaserEnemy {
     this.angle += Math.max(-maxTurn, Math.min(maxTurn, angleDiff));
 
     // Realistic turning deceleration
-    const turnPenalty = Math.max(0.65, 1 - Math.abs(angleDiff) * 0.35);
-    const moveSpeed = this.speed * speedMult * turnPenalty;
+    const turnPenalty = Math.max(0.7, 1 - Math.abs(angleDiff) * 0.3);
+    const surfacingSpeedMult = this.spawnTimer < this.spawnDuration ? 0.3 + 0.7 * (this.spawnTimer / this.spawnDuration) : 1.0;
+    const moveSpeed = this.speed * speedMult * turnPenalty * surfacingSpeedMult;
 
     const nextX = this.x + Math.cos(this.angle) * moveSpeed * dt;
     const nextY = this.y + Math.sin(this.angle) * moveSpeed * dt;
@@ -156,58 +174,68 @@ export class ChaserEnemy {
       this.x = nextX;
       this.y = nextY;
     } else {
-      // Find closest obstacle to slide along its boundary towards target
-      let closestDist = Infinity;
-      let closestNormX = 0;
-      let closestNormY = 0;
+      let moved = false;
+      if (!mapBlockedCheck(nextX, this.y, this.radius)) {
+        this.x = nextX;
+        moved = true;
+      } else if (!mapBlockedCheck(this.x, nextY, this.radius)) {
+        this.y = nextY;
+        moved = true;
+      }
 
-      for (const box of obstacles) {
-        const cx = Math.max(box.x, Math.min(this.x, box.x + box.width));
-        const cy = Math.max(box.y, Math.min(this.y, box.y + box.height));
-        const d = Math.hypot(this.x - cx, this.y - cy);
-        if (d < closestDist) {
-          closestDist = d;
-          if (d > 0.01) {
-            closestNormX = (this.x - cx) / d;
-            closestNormY = (this.y - cy) / d;
+      if (!moved) {
+        for (const box of obstacles) {
+          const cx = Math.max(box.x, Math.min(this.x, box.x + box.width));
+          const cy = Math.max(box.y, Math.min(this.y, box.y + box.height));
+          const d = Math.hypot(this.x - cx, this.y - cy);
+          if (d < this.radius + 35 && d > 0.01) {
+            const nx = (this.x - cx) / d;
+            const ny = (this.y - cy) / d;
+            let tx = -ny;
+            let ty = nx;
+            const toTgtX = Math.cos(desiredAngle);
+            const toTgtY = Math.sin(desiredAngle);
+            if (tx * toTgtX + ty * toTgtY < 0) {
+              tx = -tx;
+              ty = -ty;
+            }
+            const slideX = this.x + (tx * 0.95 + nx * 0.3) * moveSpeed * dt;
+            const slideY = this.y + (ty * 0.95 + ny * 0.3) * moveSpeed * dt;
+            if (!mapBlockedCheck(slideX, slideY, this.radius)) {
+              this.x = slideX;
+              this.y = slideY;
+            } else {
+              this.x += nx * 40 * dt;
+              this.y += ny * 40 * dt;
+            }
+            break;
           }
         }
       }
+    }
 
-      if (closestDist < this.radius + 40 && (closestNormX !== 0 || closestNormY !== 0)) {
-        // Tangent perpendicular to obstacle normal
-        let tangX = -closestNormY;
-        let tangY = closestNormX;
-
-        // Ensure tangent points towards target
-        const toTargetX = targetX - this.x;
-        const toTargetY = targetY - this.y;
-        if (tangX * toTargetX + tangY * toTargetY < 0) {
-          tangX = -tangX;
-          tangY = -tangY;
-        }
-
-        const slideX = this.x + (tangX * 0.85 + closestNormX * 0.4) * moveSpeed * dt;
-        const slideY = this.y + (tangY * 0.85 + closestNormY * 0.4) * moveSpeed * dt;
-
-        if (!mapBlockedCheck(slideX, slideY, this.radius)) {
-          this.x = slideX;
-          this.y = slideY;
-        } else if (!mapBlockedCheck(this.x + closestNormX * 30 * dt, this.y + closestNormY * 30 * dt, this.radius)) {
-          this.x += closestNormX * 30 * dt;
-          this.y += closestNormY * 30 * dt;
-        }
-      } else {
-        if (!mapBlockedCheck(nextX, this.y, this.radius)) {
-          this.x = nextX;
-        } else if (!mapBlockedCheck(this.x, nextY, this.radius)) {
-          this.y = nextY;
+    // Physical separation from other enemies (prevents ships stacking or locking together)
+    if (otherEnemies) {
+      for (const other of otherEnemies) {
+        if (other.x === this.x && other.y === this.y) continue;
+        const dx = this.x - other.x;
+        const dy = this.y - other.y;
+        const dist = Math.hypot(dx, dy);
+        const minDist = this.radius + other.radius + 4;
+        if (dist > 0.1 && dist < minDist) {
+          const push = ((minDist - dist) / minDist) * 75 * dt;
+          const px = this.x + (dx / dist) * push;
+          const py = this.y + (dy / dist) * push;
+          if (!mapBlockedCheck(px, py, this.radius)) {
+            this.x = px;
+            this.y = py;
+          }
         }
       }
     }
 
     // Strict boundary enforcement (never sail into edge)
-    const edgeMargin = 70;
+    const edgeMargin = 40;
     if (this.x < edgeMargin) this.x = edgeMargin;
     if (this.x > arenaWidth - edgeMargin) this.x = arenaWidth - edgeMargin;
     if (this.y < edgeMargin) this.y = edgeMargin;

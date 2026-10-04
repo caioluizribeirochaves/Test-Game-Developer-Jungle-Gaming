@@ -32,10 +32,10 @@ export class MapGenerator {
     // 4. Bottom-Right Palm Strip Island (Green meadow + Stranded boat + Twin Palms)
     { x: 1100, y: 680, width: 380, height: 220 },
 
-    // Sea Rocks in open navigation channels
-    { x: 940, y: 210, width: 50, height: 45, isRock: true },
-    { x: 880, y: 840, width: 50, height: 45, isRock: true },
-    { x: 1500, y: 630, width: 45, height: 40, isRock: true },
+    // Sea Rocks in open navigation channels (matching visual sprite footprint)
+    { x: 920, y: 195, width: 90, height: 80, isRock: true },
+    { x: 865, y: 825, width: 85, height: 75, isRock: true },
+    { x: 1480, y: 615, width: 80, height: 75, isRock: true },
   ];
 
   private waveGfx: Graphics | null = null;
@@ -479,9 +479,9 @@ export class MapGenerator {
    */
   private renderSeaRocks(container: Container, assets: AssetLoader): void {
     const rocks = [
-      { box: this.obstacles[4]!, tex: 'tile_67', scale: 1.15 }, // user screenshot rock
-      { box: this.obstacles[5]!, tex: 'tile_66', scale: 1.15 },
-      { box: this.obstacles[6]!, tex: 'tile_50', scale: 1.2 },
+      { box: this.obstacles[4]!, tex: 'tile_67', width: 90, height: 80 },
+      { box: this.obstacles[5]!, tex: 'tile_66', width: 85, height: 75 },
+      { box: this.obstacles[6]!, tex: 'tile_50', width: 80, height: 75 },
     ];
 
     for (const r of rocks) {
@@ -489,7 +489,8 @@ export class MapGenerator {
       rockSprite.anchor.set(0.5);
       rockSprite.x = r.box.x + r.box.width / 2;
       rockSprite.y = r.box.y + r.box.height / 2;
-      rockSprite.scale.set(r.scale);
+      rockSprite.width = r.width;
+      rockSprite.height = r.height;
       container.addChild(rockSprite);
     }
   }

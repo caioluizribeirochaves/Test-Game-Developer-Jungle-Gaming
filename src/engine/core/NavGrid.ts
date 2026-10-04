@@ -47,7 +47,7 @@ export class NavGrid {
     const py = r * this.cellSize + this.cellSize / 2;
 
     // Boundary margins
-    const edgeMargin = 45;
+    const edgeMargin = 40;
     if (
       px < edgeMargin ||
       px > this.arenaWidth - edgeMargin ||
@@ -59,7 +59,7 @@ export class NavGrid {
 
     // Island & rock obstacle check (tuned to allow all channels/straits between islands)
     for (const box of this.obstacles) {
-      const margin = box.isRock ? 16 : 28;
+      const margin = box.isRock ? 12 : 20;
       if (
         px >= box.x - margin &&
         px <= box.x + box.width + margin &&
@@ -80,15 +80,15 @@ export class NavGrid {
 
   public isWorldPointBlocked(x: number, y: number, extraMargin: number = 0): boolean {
     if (
-      x < 65 + extraMargin ||
-      x > this.arenaWidth - (65 + extraMargin) ||
-      y < 65 + extraMargin ||
-      y > this.arenaHeight - (65 + extraMargin)
+      x < 45 + extraMargin ||
+      x > this.arenaWidth - (45 + extraMargin) ||
+      y < 45 + extraMargin ||
+      y > this.arenaHeight - (45 + extraMargin)
     ) {
       return true;
     }
     for (const box of this.obstacles) {
-      const m = (box.isRock ? 28 : 50) + extraMargin;
+      const m = (box.isRock ? 14 : 24) + extraMargin;
       if (
         x >= box.x - m &&
         x <= box.x + box.width + m &&
@@ -102,17 +102,19 @@ export class NavGrid {
   }
 
   /**
-   * Fast 2D line-of-sight check against all obstacle bounding boxes.
+   * Exact 2D line-of-sight check against all obstacle bounding boxes.
    */
   public hasLineOfSight(
     x1: number,
     y1: number,
     x2: number,
     y2: number,
-    margin: number = 38
+    margin: number = 8
   ): boolean {
-    const dx = x2 - x1;
-    const dy = y2 - y1;
+    const minSegX = Math.min(x1, x2);
+    const maxSegX = Math.max(x1, x2);
+    const minSegY = Math.min(y1, y2);
+    const maxSegY = Math.max(y1, y2);
 
     for (const box of this.obstacles) {
       const minX = box.x - margin;
@@ -120,38 +122,60 @@ export class NavGrid {
       const minY = box.y - margin;
       const maxY = box.y + box.height + margin;
 
-      let tmin = 0;
-      let tmax = 1;
-
-      if (Math.abs(dx) < 1e-6) {
-        if (x1 < minX || x1 > maxX) continue;
-      } else {
-        const ood = 1 / dx;
-        let t1 = (minX - x1) * ood;
-        let t2 = (maxX - x1) * ood;
-        if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
-        tmin = Math.max(tmin, t1);
-        tmax = Math.min(tmax, t2);
-        if (tmin > tmax) continue;
+      // Quick bounding box rejection
+      if (maxSegX < minX || minSegX > maxX || maxSegY < minY || minSegY > maxY) {
+        continue;
       }
 
-      if (Math.abs(dy) < 1e-6) {
-        if (y1 < minY || y1 > maxY) continue;
-      } else {
-        const ood = 1 / dy;
-        let t1 = (minY - y1) * ood;
-        let t2 = (maxY - y1) * ood;
-        if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
-        tmin = Math.max(tmin, t1);
-        tmax = Math.min(tmax, t2);
-        if (tmin > tmax) continue;
+      // If target or waypoint is inside obstacle box, blocked
+      if (x2 >= minX && x2 <= maxX && y2 >= minY && y2 <= maxY) {
+        return false;
       }
 
-      // Intersection found
-      return false;
+      // 2D segment vs box edge intersection
+      if (this.segmentIntersectsBox(x1, y1, x2, y2, minX, maxX, minY, maxY)) {
+        return false;
+      }
     }
 
     return true;
+  }
+
+  private segmentIntersectsBox(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    minX: number,
+    maxX: number,
+    minY: number,
+    maxY: number
+  ): boolean {
+    return (
+      this.segmentsIntersect(x1, y1, x2, y2, minX, minY, maxX, minY) ||
+      this.segmentsIntersect(x1, y1, x2, y2, minX, maxY, maxX, maxY) ||
+      this.segmentsIntersect(x1, y1, x2, y2, minX, minY, minX, maxY) ||
+      this.segmentsIntersect(x1, y1, x2, y2, maxX, minY, maxX, maxY)
+    );
+  }
+
+  private segmentsIntersect(
+    ax: number,
+    ay: number,
+    bx: number,
+    by: number,
+    cx: number,
+    cy: number,
+    dx: number,
+    dy: number
+  ): boolean {
+    const ccw = (px: number, py: number, qx: number, qy: number, rx: number, ry: number) => {
+      return (ry - py) * (qx - px) > (qy - py) * (rx - px);
+    };
+    return (
+      ccw(ax, ay, cx, cy, dx, dy) !== ccw(bx, by, cx, cy, dx, dy) &&
+      ccw(ax, ay, bx, by, cx, cy) !== ccw(ax, ay, bx, by, dx, dy)
+    );
   }
 
   /**
@@ -312,14 +336,14 @@ export class NavGrid {
     path.reverse();
 
     // Path shortcutting (string pulling):
-    // Find the furthest waypoint in path that has clear line-of-sight from startX, startY
-    for (let i = path.length - 1; i >= 0; i--) {
+    // Find the furthest reachable waypoint in path that has clear line-of-sight from startX, startY
+    for (let i = path.length - 1; i >= 1; i--) {
       const wp = path[i]!;
-      if (this.hasLineOfSight(startX, startY, wp.x, wp.y, 40)) {
+      if (this.hasLineOfSight(startX, startY, wp.x, wp.y, 8)) {
         return wp;
       }
     }
 
-    return path[0] ?? { x: targetX, y: targetY };
+    return path[1] ?? path[0] ?? { x: targetX, y: targetY };
   }
 }

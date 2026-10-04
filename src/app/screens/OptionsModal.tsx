@@ -83,11 +83,21 @@ export const OptionsModal: React.FC<OptionsModalProps> = ({
       className={
         isInGame
           ? 'absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center overflow-x-hidden overflow-y-auto p-4 sm:p-6'
-          : 'relative w-full h-full flex flex-col items-center justify-center bg-cover bg-center overflow-x-hidden overflow-y-auto p-4 sm:p-6'
+          : 'relative w-full h-full flex flex-col items-center justify-center overflow-x-hidden overflow-y-auto p-4 sm:p-6 select-none'
       }
-      style={isInGame ? undefined : { backgroundImage: 'url(/assets/ui_scene_background.png)' }}
     >
-      <PiratePanel size="md">
+      {!isInGame && (
+        <>
+          {/* Subtle darkened and slightly blurred background scene for high contrast focus */}
+          <div
+            className="absolute inset-0 bg-cover bg-center filter blur-[2.5px] scale-105 pointer-events-none"
+            style={{ backgroundImage: 'url(/assets/ui_scene_background.png)' }}
+          />
+          <div className="absolute inset-0 bg-black/35 pointer-events-none" />
+        </>
+      )}
+
+      <PiratePanel size="md" className="z-10">
         <h2 className="text-2xl sm:text-3xl font-extrabold text-[#fce79f] tracking-wider mb-5 drop-shadow-md">
           OPTIONS
         </h2>

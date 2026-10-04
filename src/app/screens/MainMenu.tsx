@@ -91,12 +91,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           </PirateButton>
         </div>
 
-        {/* Dinghy Illustration & Tagline */}
+        {/* Player Ship Illustration & Tagline */}
         <div className="flex flex-col items-center gap-2 my-1">
           <img
-            src="/assets/png/retina/ships/dinghy_large_1.png"
-            alt="Pirate Boat"
-            className="w-7 h-11 sm:w-8 sm:h-12 object-contain filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.85)]"
+            src="/assets/png/retina/ships/ship_2.png"
+            alt="Player Pirate Ship"
+            className="w-9 h-14 sm:w-10 sm:h-16 object-contain filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.85)]"
           />
           <p className="font-serif text-[9.5px] sm:text-[10.5px] font-semibold tracking-wider text-[#d4bd8a] uppercase text-center drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] max-w-[280px]">
             NAVIGATE THE ISLANDS. SURVIVE THE BATTLE.

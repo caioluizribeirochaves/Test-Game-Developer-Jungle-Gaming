@@ -494,6 +494,8 @@ export class GameEngine {
       this.balance.spawnSafetyRadius
     );
 
+    this.particleMgr?.spawnSurfacingRipples(spawnPoint.x, spawnPoint.y, 3);
+
     const isChaser = Math.random() < this.balance.chaserRatio;
     if (isChaser) {
       const chaser = new ChaserEnemy(spawnPoint.x, spawnPoint.y, this.balance, this.shipsLayer);
